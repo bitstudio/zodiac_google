@@ -68,7 +68,7 @@ def get_normalized_contour_and_stat(contour):
     bias = float(sl) / size
     variance = float(sll) / size - bias * bias
 
-    out_contour = out_contour / variance
+    # out_contour = out_contour / variance
 
     return out_contour, centroid, bias, variance
 
@@ -147,14 +147,14 @@ def interpolate(canvas, morph_structure, time):
 
     contours = np.zeros((1, contourSize, 2), dtype=np.int32)
     for i in range(contourSize):
-        s = to_polar(start[(i + shift + contourSize) % contourSize], pivot, offset)
+        s = to_polar(start[(i + shift + contourSize) % contourSize], pivot)
         e = to_polar(end[(i + 0 + contourSize) % contourSize], pivot)
 
         t = from_polar((s[0] * (1 - time) + e[0] * time, interpolate_theta(s[1], e[1], time)), pivot)
         contours[0, i, 0] = int(t[0])
         contours[0, i, 1] = int(t[1])
 
-    cv2.fillPoly(canvas, contours, (0, 0, 0, 255))
+    cv2.fillPoly(canvas, contours, (0, 0, 0))
     return canvas
 
 
@@ -183,44 +183,40 @@ def to_float_mat(raw):
     return raw
 
 
-mask = None
-
-
 def process_raw(raw, flip=True):
-    global mask
-    if mask is None:
-        mask = np.zeros((raw.shape[0], raw.shape[1]), dtype=np.uint8)
+    global ex, ey
+    if ex is None or ey is None:
+        ex = raw.shape[1]
+        ey = raw.shape[0]
+    raw = raw[sy: ey, sx: ex]
     if flip:
         raw = cv2.flip(raw, 1)
+    raw = cv2.resize(raw, (raw_target.shape[1], raw_target.shape[0]))
     raw = to_float_mat(raw)
     ret, result = cv2.threshold(raw, 120, 255, cv2.THRESH_BINARY)
-    result = np.maximum(result, mask)
     return result
 
 
 sx = 0
 sy = 0
+ex = None
+ey = None
 
 
 def on_mouse(e, x, y, a, b):
-    global sx, sy, mask
-    if e == cv2.EVENT_RBUTTONDOWN:
-        print(x, y)
+    global sx, sy, ex, ey
+    if e == cv2.EVENT_LBUTTONDOWN:
         sx = x
         sy = y
-    if e == cv2.EVENT_RBUTTONUP:
-        if mask is not None:
-            mask.fill(0)
-            dist = (sx - x)**2 + (sy - y)**2
-            xv, yv = np.meshgrid(np.arange(0, mask.shape[1], 1), np.arange(0, mask.shape[0], 1))
-            indices = (yv - sy)**2 + (xv - sx)**2 > dist
-            mask[indices] = 255
+    if e == cv2.EVENT_LBUTTONUP:
+        ex = x
+        ey = y
 
 
 file_dir = os.path.dirname(os.path.realpath(__file__))
 
 source = cv2.VideoCapture(0)
-raw_target = cv2.imread(os.path.join(file_dir, "assets", "woman.png"), cv2.IMREAD_UNCHANGED)
+raw_target = cv2.imread(os.path.join(file_dir, "assets", "dragon_head01.png"), cv2.IMREAD_UNCHANGED)
 raw_target = cv2.blur(raw_target, (7, 7))
 morph_target = np.zeros((raw_target.shape[0], raw_target.shape[1]), np.uint8)
 idx = np.logical_or(raw_target[:, :, 3] < 1, raw_target[:, :, 0] > 200)
@@ -229,13 +225,15 @@ morph_target_contour = extract_contour(morph_target)
 draw_contour(morph_target, morph_target_contour, "target")
 morph_time = 2.0
 
-destination_writer = cv2.VideoWriter(os.path.join(file_dir, "assets", "gen_vid.mp4"), cv2.VideoWriter_fourcc('M', 'P', '4', '2'), 60, (raw_target.shape[1], raw_target.shape[0]))
+destination_writer = cv2.VideoWriter(os.path.join(file_dir, "assets", "gen_dragon2.mp4"), cv2.VideoWriter_fourcc('M', 'P', '4', '2'), 60, (raw_target.shape[1], raw_target.shape[0]))
 
 
 if __name__ == '__main__':
-    print("Morph")
+    print("Morph: 'q' to quit. 'm' to morph. 'r' to start recording. 's' to stop recording.")
     cv2.namedWindow("raw")
     cv2.setMouseCallback("raw", on_mouse)
+
+    auto_morph_start_time = time.clock()
 
     is_morphing = False
     start_time = time.clock()
@@ -244,10 +242,16 @@ if __name__ == '__main__':
     canvas = None
     write_file = False
     while key != ord('q'):
-        if key == ord('g'):
+        if key == ord('r'):
             write_file = True
-            key = ord('m')
-        if key == ord('m'):
+            print("start recording")
+        if key == ord('s'):
+            write_file = False
+            print("stop recording")
+
+        elapsed = time.clock() - auto_morph_start_time
+        print(elapsed)
+        if not is_morphing and (elapsed > 5.0 or key == ord('m')):
             ret, frame = source.read()
             start_contour = extract_contour(process_raw(frame))
             if canvas is None:
@@ -258,21 +262,24 @@ if __name__ == '__main__':
                 morph_structure = setup(start_contour, morph_target_contour)
 
         elapsed = time.clock() - start_time
-        if elapsed > morph_time:
+        if is_morphing and elapsed > morph_time:
             is_morphing = False
-            write_file = False
+            auto_morph_start_time = time.clock()
 
         if is_morphing:
-            result = interpolate(canvas, morph_structure, elapsed / morph_time)
-            if write_file:
-                destination_writer.write(result)
-            cv2.imshow("raw", result)
+            draw = interpolate(canvas, morph_structure, elapsed / morph_time)
         else:
             ret, frame = source.read()
+            cv2.imshow("raw", frame)
             processed = process_raw(frame)
-            cv2.imshow("raw", processed)
-            contour = extract_contour(processed)
-            draw_contour(processed, contour, "raw contour")
+            # contour = extract_contour(processed)
+            # draw_contour(processed, contour, "motion")
+            draw = cv2.cvtColor(processed, cv2.COLOR_GRAY2RGB)
+
+        if write_file:
+            destination_writer.write(draw)
+        cv2.imshow("motion", draw)
+
         key = cv2.waitKey(1)
 
     source.release()
