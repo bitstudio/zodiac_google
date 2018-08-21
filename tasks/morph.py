@@ -91,9 +91,9 @@ def setup(start_contour, end_contour):
     morph_structure = {}
     morph_structure["start"] = start_contour
     morph_structure["end"] = end_contour
-    morph_structure["pivot"] = c_end
+    morph_structure["pivot_start"] = c_start
+    morph_structure["pivot_end"] = c_end
     morph_structure["shift"] = shift
-    morph_structure["offset"] = (c_end[0] - c_start[0], c_end[1] - c_start[1])
     return morph_structure
 
 
@@ -137,9 +137,9 @@ def interpolate_theta(t0, t1, alpha):
 def interpolate(canvas, morph_structure, time):
     start = morph_structure["start"]
     end = morph_structure["end"]
-    pivot = morph_structure["pivot"]
+    pivot_start = morph_structure["pivot_start"]
+    pivot_end = morph_structure["pivot_end"]
     shift = morph_structure["shift"]
-    offset = morph_structure["offset"]
 
     time = 1.0 / (1 + math.exp(-(time - 0.5) * 10))
     canvas.fill(255)
@@ -147,10 +147,10 @@ def interpolate(canvas, morph_structure, time):
 
     contours = np.zeros((1, contourSize, 2), dtype=np.int32)
     for i in range(contourSize):
-        s = to_polar(start[(i + shift + contourSize) % contourSize], pivot)
-        e = to_polar(end[(i + 0 + contourSize) % contourSize], pivot)
+        s = to_polar(start[(i + shift + contourSize) % contourSize], pivot_start)
+        e = to_polar(end[(i + 0 + contourSize) % contourSize], pivot_end)
 
-        t = from_polar((s[0] * (1 - time) + e[0] * time, interpolate_theta(s[1], e[1], time)), pivot)
+        t = from_polar((s[0] * (1 - time) + e[0] * time, interpolate_theta(s[1], e[1], time)), pivot_end)
         contours[0, i, 0] = int(t[0])
         contours[0, i, 1] = int(t[1])
 
@@ -216,7 +216,7 @@ def on_mouse(e, x, y, a, b):
 file_dir = os.path.dirname(os.path.realpath(__file__))
 
 source = cv2.VideoCapture(0)
-raw_target = cv2.imread(os.path.join(file_dir, "assets", "dragon_head01.png"), cv2.IMREAD_UNCHANGED)
+raw_target = cv2.imread(os.path.join(file_dir, "assets", "woman.png"), cv2.IMREAD_UNCHANGED)
 raw_target = cv2.blur(raw_target, (7, 7))
 morph_target = np.zeros((raw_target.shape[0], raw_target.shape[1]), np.uint8)
 idx = np.logical_or(raw_target[:, :, 3] < 1, raw_target[:, :, 0] > 200)
@@ -225,7 +225,7 @@ morph_target_contour = extract_contour(morph_target)
 draw_contour(morph_target, morph_target_contour, "target")
 morph_time = 2.0
 
-destination_writer = cv2.VideoWriter(os.path.join(file_dir, "assets", "gen_dragon2.mp4"), cv2.VideoWriter_fourcc('M', 'P', '4', '2'), 60, (raw_target.shape[1], raw_target.shape[0]))
+destination_writer = cv2.VideoWriter(os.path.join(file_dir, "assets", "gen_woman.mp4"), cv2.VideoWriter_fourcc('M', 'P', '4', '2'), 60, (raw_target.shape[1], raw_target.shape[0]))
 
 
 if __name__ == '__main__':
