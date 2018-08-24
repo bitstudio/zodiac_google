@@ -69,7 +69,7 @@ class Comparator:
             self.intra_class_loss = self.moment_compare(tf.expand_dims(a, axis=1), z[:, 0:self.num_intra_class, :])
             self.inter_class_loss = self.moment_compare(tf.expand_dims(a, axis=1), z[:, self.num_intra_class:, :])
 
-        self.overall_cost = tf.reduce_mean(self.intra_class_loss) - tf.reduce_mean(self.inter_class_loss)
+        self.overall_cost = tf.reduce_mean(self.intra_class_loss) - tf.reduce_mean(self.inter_class_loss) + 1.0
 
         scope = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES)
         print([x.name for x in scope])
@@ -78,7 +78,7 @@ class Comparator:
 
         self.saver = tf.train.Saver(var_list=scope, keep_checkpoint_every_n_hours=1)
 
-    def train(self, sess, data, samples, session_name="../artifacts/test", shuffle=True, batch_size=5, max_iteration=1000, continue_from_last=False):
+    def train(self, sess, data, samples, session_name="weight_sets/test", shuffle=True, batch_size=5, max_iteration=1000, continue_from_last=False):
         if continue_from_last:
             self.load_session(sess, session_name)
 
