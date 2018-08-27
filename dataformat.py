@@ -27,17 +27,14 @@ def build_filename(number, label, x1, y1, x2, y2):
     return str(number) + "." + str(label) + "." + str(x1) + "," + str(y1) + "," + str(x2) + "," + str(y2) + ".png"
 
 
+# ONLY ACCEPT BLACK BG and WHITE OBJECT
 class DataFormat:
     # size = (width, height, depth)
     def __init__(self, depth, size=(512, 512)):
         self.size = size
         self.depth = depth
 
-    def read_datafile(self, filepath):
-        filename = os.path.basename(filepath)
-        img = cv2.imread(filepath)
-        scale = (self.size[0] / img.shape[1], self.size[1] / img.shape[0])
-        label_box = parse_filename(filename, scale)
+    def format(self, img):
         img = util.image_to_size(img, self.size)
 
         raw = imageprocess.blur(img)
@@ -49,7 +46,14 @@ class DataFormat:
         r = imageprocess.normalize_distance(r)
         r, t = imageprocess.normalize_distance_delta_theta(r, t)
         series = np.stack([r, t])
+        return series
 
+    def read_datafile(self, filepath):
+        filename = os.path.basename(filepath)
+        img = cv2.imread(filepath)
+        scale = (self.size[0] / img.shape[1], self.size[1] / img.shape[0])
+        label_box = parse_filename(filename, scale)
+        series = self.format(img)
         return series, label_box, filename
 
 

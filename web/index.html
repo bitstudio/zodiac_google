@@ -1,0 +1,124 @@
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta content="stuff, to, help, search, engines, not" name="keywords">
+    <meta content="What this page is about." name="description">
+    <meta content="Image uploader" name="title">
+    <title>Image uploader</title>
+    <script src="jquery-3.2.1.min.js"></script>
+</head>
+
+<body>
+    <div id="placeholder">
+    </div>
+    <div id="placeholder2">
+    </div>
+    <canvas id="canvas" width="512" height="512" style="border:1px solid #000000;">
+    </canvas>
+    <input type="file" id="input" onchange="submit(this.files)">
+    <script>
+    $(document).ready(function() {
+
+        $.get("/set", function(data) {
+            sets = JSON.parse(data)["sets"];
+            checked_index = JSON.parse(data)["current"] || 0;
+            templates = JSON.parse(data)["templates"];
+            checked_template = JSON.parse(data)["current_template"] || 0;
+            for (var i = 0; i < sets.length; ++i) {
+
+                button_tag = '<input id="button_' + i + '" type="radio" name="weight_set" onclick="change_set(' + i + ')" />';
+                if(i == checked_index) {
+                    button_tag = button_tag.substring(0, button_tag.length-2) + "checked />'";
+                }
+                
+                var $input = $(button_tag);
+                var $label = $('<label for="button_' + i + '">' + sets[i]["session_name"] + '</label>');
+                $input.appendTo($("#placeholder"));
+                $label.appendTo($("#placeholder"))
+            }
+
+            for (var i = 0; i < templates.length; ++i) {
+
+                button_tag = '<input id="template_' + i + '" type="radio" name="template_set" onclick="change_template(' + i + ')" />';
+                if(i == checked_template) {
+                    button_tag = button_tag.substring(0, button_tag.length-2) + "checked />'";
+                }
+                
+                var $input = $(button_tag);
+                var $label = $('<label for="template_' + i + '">' + templates[i] + '</label>');
+                $input.appendTo($("#placeholder2"));
+                $label.appendTo($("#placeholder2"))
+            }
+
+        });
+
+        var c = document.getElementById("canvas");
+        var ctx = c.getContext("2d");
+
+        var img = new Image(512, 512); // using optional size for image
+        img.onload = drawImageActualSize; // draw when image has loaded
+
+        window.submit = function(files) {
+            console.log(files.length);
+            for (var i = 0, numFiles = files.length; i < numFiles; i++) {
+                var file = files[i];
+                var reader = new FileReader();
+                reader.onload = (function(aImg) {
+                    return function(e) {
+                        aImg.src = e.target.result;
+                        console.log(e.target.result);
+                        var msg = {};
+                        msg["image"] = e.target.result;
+                        msg["reference"] = new Date().getTime().toString();
+                        $.post("/classify", msg, function(data) {
+                            var json = JSON.parse(data);
+                            console.log(json);
+                            ctx.fillStyle="#FFFFFF";
+                            for (var j = 0; j < json["classes"].length; ++j) {
+                                ctx.fillStyle="#FFFFFF";
+                                ctx.fillRect(40,35 + 20*j,40,20);
+                                ctx.fillStyle="#000000";
+                                ctx.font="18px Arial";
+                                ctx.fillText(json["classes"][j].toString(), 50, 50 + 20*j);
+                            }
+
+                        });
+                    };
+                })(img);
+                reader.readAsDataURL(file);
+            }
+        };
+
+        function drawImageActualSize() {
+            canvas.width = this.naturalWidth;
+            canvas.height = this.naturalHeight;
+            ctx.drawImage(this, 0, 0, this.width, this.height);
+        }
+
+    });
+
+
+    window.change_set = function(index) {
+        console.log(index);
+        var msg = {};
+        msg["index"] = index;
+        $.post("/set", msg, function(data) {
+            var json = JSON.parse(data);
+            console.log(json);
+        });
+    };
+
+    window.change_template = function(index) {
+        console.log(index);
+        var msg = {};
+        msg["template"] = index;
+        $.post("/set", msg, function(data) {
+            var json = JSON.parse(data);
+            console.log(json);
+        });
+    };
+    </script>
+</body>
+
+</html>
