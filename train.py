@@ -102,7 +102,4 @@ if __name__ == '__main__':
     samples = np.reshape(samples, [-1, num_intra_class + num_inter_class, input_size[0] * 2])
     comparator.train(sess, data, samples, session_name="weight_sets/" + session_name, batch_size=min(100, labels.shape[0]), max_iteration=iterations, continue_from_last=False)
 
-    classes, raw = comparator.process(sess, data, templates)
-    print(classes)
-
     sess.close()

@@ -93,7 +93,7 @@ def read_data_directory(formatter, from_date, to_date, set_list):
     pwd = os.path.dirname(os.path.abspath(__file__))
     api_dir = os.path.join(pwd, "data", api_version)
     if not os.path.exists(api_dir):
-        return data
+        return data, labels
 
     for setname in os.listdir(api_dir):
         if setname in set_list or len(set_list) is 0:
@@ -105,6 +105,26 @@ def read_data_directory(formatter, from_date, to_date, set_list):
                         ts, label, _ = formatter.read_datafile(os.path.join(date_dir, filename))
                         data.append(ts)
                         labels.append(label)
+
+    data = np.asarray(data, dtype=np.float32)
+    labels = np.asarray(labels, dtype=np.int32)
+    return data, labels
+
+
+def read_template_directory(formatter, path):
+
+    data = []
+    labels = []
+
+    pwd = os.path.dirname(os.path.abspath(__file__))
+    template_dir = os.path.join(pwd, path)
+    if not os.path.exists(template_dir):
+        return data, labels
+
+    for filename in os.listdir(template_dir):
+        ts, label, _ = formatter.read_datafile(os.path.join(template_dir, filename))
+        data.append(ts)
+        labels.append(label)
 
     data = np.asarray(data, dtype=np.float32)
     labels = np.asarray(labels, dtype=np.int32)
