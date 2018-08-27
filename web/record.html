@@ -227,8 +227,8 @@
             temp.delete();
         }
 
-        disp.data.fill(255);
-        let color = new cv.Scalar(0.0, 0.0, 0.0, 255);
+        disp.data.fill(0.0);
+        let color = new cv.Scalar(255, 255, 255, 255);
         cv.drawContours(disp, contours, max_i, color, cv.FILLED, cv.LINE_8, hierarchy, 1);
 
         let cnt = contours.get(max_i);
