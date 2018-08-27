@@ -20,7 +20,7 @@ def parse_image_contained_body(request_handler):
 
     if "json" in request_handler.request.headers.get('Content-Type'):
         try:
-            json_data = json.loads(request_handler.request.body)
+            json_data = json.loads(request_handler.request.body.decode('utf-8'))
             ref_number = json_data["reference"]
             if 'image' in json_data:
                 image = json_data["image"]
