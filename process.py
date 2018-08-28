@@ -68,7 +68,7 @@ class Runner:
         print(self.session_name)
         num_intra_class = 10
         num_inter_class = 20
-        self.comparator = momentnet.Comparator(self.size[0] * 2, self.size[1], num_intra_class=num_intra_class, num_inter_class=num_inter_class, layers=5, lambdas=(5, 0.5, 5))
+        self.comparator = momentnet.Comparator((2, self.size[0]), self.size[1], num_intra_class=num_intra_class, num_inter_class=num_inter_class, layers=5, lambdas=(5, 0.5, 5))
 
         config = tf.ConfigProto()
         config.gpu_options.allow_growth = True

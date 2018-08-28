@@ -61,7 +61,7 @@ if __name__ == '__main__':
 
     num_intra_class = 10
     num_inter_class = 20
-    comparator = momentnet.Comparator(input_size[0] * 2, input_size[1], num_intra_class=num_intra_class, num_inter_class=num_inter_class, layers=5, lambdas=(5, 0.5, 5))
+    comparator = momentnet.Comparator((2, input_size[0]), input_size[1], num_intra_class=num_intra_class, num_inter_class=num_inter_class, layers=10, lambdas=(5, 0.5, 5))
 
     sess = tf.Session()
     sess.run(tf.global_variables_initializer())

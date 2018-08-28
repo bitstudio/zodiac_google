@@ -89,17 +89,11 @@ if __name__ == '__main__':
 
     num_intra_class = 10
     num_inter_class = 20
-    comparator = momentnet.Comparator(input_size[0] * 2, input_size[1], num_intra_class=num_intra_class, num_inter_class=num_inter_class, layers=5, lambdas=(5, 0.5, 5))
-    sample_generator = generator.Sample_generator((2, input_size[0]), num_intra_class, num_inter_class)
+    comparator = momentnet.Comparator((2, input_size[0]), input_size[1], num_intra_class=num_intra_class, num_inter_class=num_inter_class, layers=10, lambdas=(5, 0.5, 5))
 
     sess = tf.Session()
     sess.run(tf.global_variables_initializer())
 
-    samples = sample_generator.generate(sess, data)
-
-    templates = np.reshape(np.roll(data, 100, axis=3), [-1, input_size[0] * 2])
-    data = np.reshape(data, [-1, input_size[0] * 2])
-    samples = np.reshape(samples, [-1, num_intra_class + num_inter_class, input_size[0] * 2])
-    comparator.train(sess, data, samples, session_name="weight_sets/" + session_name, batch_size=min(100, labels.shape[0]), max_iteration=iterations, continue_from_last=False)
+    comparator.train(sess, data, session_name="weight_sets/" + session_name, batch_size=min(100, labels.shape[0]), max_iteration=iterations, continue_from_last=False)
 
     sess.close()

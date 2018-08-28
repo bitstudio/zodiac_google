@@ -4,6 +4,7 @@ import random
 import time
 from tensorflow.python.client import device_lib
 import os
+import generator
 
 
 def broadcast(input, shape):
@@ -42,19 +43,21 @@ class Comparator:
 
     def __init__(self, input_dimension, num_moments, num_intra_class=10, num_inter_class=20, layers=2, lambdas=(5, 0.5, 5)):
         self.num_moments = num_moments
-        self.input_dimension = input_dimension
+        self.total_input_size = input_dimension[0] * input_dimension[1]
         self.layers = layers
         self.num_intra_class = num_intra_class
         self.num_inter_class = num_inter_class
 
-        self.inputs = tf.placeholder(tf.float32, [None, self.input_dimension])
-        self.samples = tf.placeholder(tf.float32, [None, self.num_intra_class + self.num_inter_class, self.input_dimension])
+        self.sample_generator = generator.Sample_generator(input_dimension, self.num_intra_class, self.num_inter_class)
 
-        self.templates = tf.placeholder(tf.float32, [None, self.input_dimension])
+        self.inputs = tf.placeholder(tf.float32, [None, self.total_input_size])
+        self.samples = tf.placeholder(tf.float32, [None, self.num_intra_class + self.num_inter_class, self.total_input_size])
+        self.templates = tf.placeholder(tf.float32, [None, self.total_input_size])
+
         self.first_time = True
 
         a = self.body(self.inputs, self.num_moments, self.layers)
-        z = self.body(tf.reshape(self.samples, [-1, self.input_dimension]), self.num_moments, self.layers)
+        z = self.body(tf.reshape(self.samples, [-1, self.total_input_size]), self.num_moments, self.layers)
         z = tf.reshape(z, [-1, self.num_intra_class + self.num_inter_class, self.num_moments])
         t = self.body(self.templates, self.num_moments, self.layers)
 
@@ -78,9 +81,13 @@ class Comparator:
 
         self.saver = tf.train.Saver(var_list=scope, keep_checkpoint_every_n_hours=1)
 
-    def train(self, sess, data, samples, session_name="weight_sets/test", shuffle=True, batch_size=5, max_iteration=1000, continue_from_last=False):
+    def train(self, sess, data, session_name="weight_sets/test", shuffle=True, batch_size=5, max_iteration=1000, continue_from_last=False):
         if continue_from_last:
             self.load_session(sess, session_name)
+
+        samples = self.sample_generator.generate(sess, data)
+        data = np.reshape(data, [-1, self.total_input_size])
+        samples = np.reshape(samples, [-1, self.num_intra_class + self.num_inter_class, self.total_input_size])
 
         indices = np.arange(data.shape[0])
         if shuffle:
@@ -133,24 +140,17 @@ if __name__ == "__main__":
     data = np.asarray([[1, 2, 3, 4, 5], [6, 7, 8, 9, 0]])
     print(sample_shift_shuffle(data, 4))
 
-    data = np.random.rand(10, 20) * 2 - 0.5
-    _t = []
-    _f = []
-    for i in range(10):
-        _t.append(sample_shift_shuffle(data[i:i + 1, :], 20))
-        _f.append(sample_shift_shuffle(np.concatenate([data[0:i, :], data[i + 1:, :]], axis=0), 20))
+    data = np.random.rand(5, 1, 2, 20) * 2 - 0.5
+    templates = np.roll(data, 5, axis=3)
 
-    samples = np.concatenate((np.stack(_t, axis=0), np.stack(_f, axis=0)), axis=1)
-    templates = np.roll(data, 5, axis=1)
-
-    net = Comparator(20, 5, num_intra_class=20, num_inter_class=20, layers=10)
+    net = Comparator((2, 20), 5, num_intra_class=20, num_inter_class=20, layers=10)
 
     sess = tf.Session()
     sess.run(tf.global_variables_initializer())
 
-    net.train(sess, data, samples)
-    classes, raw = net.process(sess, data, templates)
+    net.train(sess, data)
+    classes, raw = net.process(sess, np.reshape(data, [-1, 2 * 20]), np.reshape(templates, [-1, 2 * 20]))
     print(classes)
-    # print(raw)
+    print(raw)
 
     sess.close()

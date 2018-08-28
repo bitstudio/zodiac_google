@@ -11,11 +11,12 @@ class Sample_generator:
         self.num_inter_class = int(num_inter_class)
 
         self.inputs = tf.placeholder(tf.float32, [None, None, self.input_size[0], self.input_size[1]])
+        self.samples = self.build_all(self.inputs)
 
-        sampled = self.build_sample_graph(self.inputs)
-
+    def build_all(self, input):
+        sampled = self.build_sample_graph(input)
         shifted = self.build_shift_graph(tf.reshape(sampled, [-1, self.input_size[0], self.input_size[1]]))
-        self.samples = tf.reshape(shifted, [-1, self.num_intra_class + self.num_inter_class, self.input_size[0], self.input_size[1]])
+        return tf.reshape(shifted, [-1, self.num_intra_class + self.num_inter_class, self.input_size[0], self.input_size[1]])
 
     def build_sample_graph(self, input):
 
