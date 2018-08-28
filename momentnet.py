@@ -9,23 +9,33 @@ def broadcast(input, shape):
 
 class Comparator:
 
-    def residue_layer(self, i, input, size, activation=tf.nn.elu):
+    def residue_layer(self, i, input):
         input_size = input.get_shape()[1]
-        w = tf.get_variable(str(i) + "w", [input_size, size], dtype=tf.float32, initializer=tf.random_normal_initializer(0.0, 0.1))
-        u = tf.get_variable(str(i) + "u", [input_size, size], dtype=tf.float32, initializer=tf.random_normal_initializer(0.0, 0.001))
-        b = tf.get_variable(str(i) + "b", size, dtype=tf.float32, initializer=tf.constant_initializer(0.0))
+        w = tf.get_variable(str(i) + "w", [input_size, input_size], dtype=tf.float32, initializer=tf.random_normal_initializer(0.0, 0.001))
+        u = tf.get_variable(str(i) + "u", [input_size, input_size], dtype=tf.float32, initializer=tf.random_normal_initializer(0.0, 0.001))
+        ub = tf.get_variable(str(i) + "ub", input_size, dtype=tf.float32, initializer=tf.constant_initializer(1.0))
+        wb = tf.get_variable(str(i) + "wb", input_size, dtype=tf.float32, initializer=tf.constant_initializer(1.0))
 
-        return activation(tf.matmul(input, u) + b) + tf.matmul(input, w)
+        residue = (tf.matmul(input, u) + ub) * input
+        output = tf.nn.elu(tf.matmul(residue, w) + wb) + residue
+        return output
+
+    def body(self, input, size, layers):
+        input_size = input.get_shape()[1]
+        with tf.variable_scope("moment", reuse=not self.first_time):
+            a = input
+            for i in range(layers):
+                a = self.residue_layer(i, a)
+
+            v = tf.get_variable("v", [input_size, size], dtype=tf.float32, initializer=tf.random_normal_initializer(0.0, 0.001))
+            b = tf.get_variable("b", size, dtype=tf.float32, initializer=tf.constant_initializer(0.0))
+            output = tf.nn.elu(tf.matmul(a, v) + b)
+
+        self.first_time = False
+        return output
 
     def moment_compare(self, f0, f1):
-
         return - tf.exp(-(tf.reduce_sum(tf.squared_difference(f0, f1), axis=2)))
-
-        # concated = tf.concat([broadcast(f0, tf.shape(f1)), broadcast(f1, tf.shape(f0))], axis=2)
-        # size = tf.shape(concated)[1]
-        # res = self.residue_layer(0, tf.reshape(concated, [-1, self.num_moments * 2]), 10)
-        # res = tf.nn.sigmoid(tf.matmul(res, tf.get_variable("f", [10, 1], dtype=tf.float32, initializer=tf.random_normal_initializer(0.0, 0.1))))
-        # return tf.reshape(res, [-1, size])
 
     def __init__(self, input_dimension, num_moments, num_intra_class=10, num_inter_class=20, layers=2, lambdas=(5, 0.5, 5)):
         self.num_moments = num_moments
@@ -38,25 +48,12 @@ class Comparator:
         self.samples = tf.placeholder(tf.float32, [None, self.num_intra_class + self.num_inter_class, self.input_dimension])
 
         self.templates = tf.placeholder(tf.float32, [None, self.input_dimension])
+        self.first_time = True
 
-        with tf.variable_scope("moment") as scope:
-            a = self.inputs
-            for i in range(self.layers):
-                a = self.residue_layer(i, a, int(self.input_dimension / 2))
-            a = self.residue_layer(self.layers, a, self.num_moments)
-
-        with tf.variable_scope(scope, reuse=True):
-            z = tf.reshape(self.samples, [-1, self.input_dimension])
-            for i in range(self.layers):
-                z = self.residue_layer(i, z, int(self.input_dimension / 2))
-            z = self.residue_layer(self.layers, z, self.num_moments)
-            z = tf.reshape(z, [-1, self.num_intra_class + self.num_inter_class, self.num_moments])
-
-        with tf.variable_scope(scope, reuse=True):
-            t = self.templates
-            for i in range(self.layers):
-                t = self.residue_layer(i, t, int(self.input_dimension / 2))
-            t = self.residue_layer(self.layers, t, self.num_moments)
+        a = self.body(self.inputs, self.num_moments, self.layers)
+        z = self.body(tf.reshape(self.samples, [-1, self.input_dimension]), self.num_moments, self.layers)
+        z = tf.reshape(z, [-1, self.num_intra_class + self.num_inter_class, self.num_moments])
+        t = self.body(self.templates, self.num_moments, self.layers)
 
         # compute comparison graph
 
@@ -74,7 +71,7 @@ class Comparator:
         scope = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES)
         print([x.name for x in scope])
         """ out of many algorithms, only Adam converge! A remarkable job for Kingma and Lei Ba!"""
-        self.training_op = tf.train.AdamOptimizer(0.0001).minimize(self.overall_cost, var_list=scope)
+        self.training_op = tf.train.AdamOptimizer(0.00001).minimize(self.overall_cost, var_list=scope)
 
         self.saver = tf.train.Saver(var_list=scope, keep_checkpoint_every_n_hours=1)
 
@@ -137,7 +134,7 @@ if __name__ == "__main__":
     samples = np.concatenate((np.stack(_t, axis=0), np.stack(_f, axis=0)), axis=1)
     templates = np.roll(data, 5, axis=1)
 
-    net = Comparator(20, 5, num_intra_class=20, num_inter_class=20, layers=8)
+    net = Comparator(20, 5, num_intra_class=20, num_inter_class=20, layers=10)
 
     sess = tf.Session()
     sess.run(tf.global_variables_initializer())
