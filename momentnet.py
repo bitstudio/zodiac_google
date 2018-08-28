@@ -1,6 +1,9 @@
 import tensorflow as tf
 import numpy as np
 import random
+import time
+from tensorflow.python.client import device_lib
+import os
 
 
 def broadcast(input, shape):
@@ -83,6 +86,7 @@ class Comparator:
         if shuffle:
             np.random.shuffle(indices)
 
+        start_time = time.time()
         for step in range(max_iteration):
             sum_loss = 0.0
             total_batches = data.shape[0] // batch_size
@@ -95,6 +99,11 @@ class Comparator:
             if (step + 1) % 100 == 0:
                 self.saver.save(sess, session_name)
                 print("Checkpoint ...")
+        elapsed_time = time.time() - start_time
+
+        with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "artifacts", "log.txt"), "w") as file:
+            file.write(str(device_lib.list_local_devices()))
+            file.write("Total time ... " + str(elapsed_time) + " seconds")
 
         self.saver.save(sess, session_name)
 
