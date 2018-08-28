@@ -143,7 +143,7 @@ if __name__ == "__main__":
     data = np.random.rand(5, 1, 2, 20) * 2 - 0.5
     templates = np.roll(data, 5, axis=3)
 
-    net = Comparator((2, 20), 5, num_intra_class=20, num_inter_class=20, layers=10)
+    net = Comparator((2, 20), 5, num_intra_class=20, num_inter_class=20, layers=5)
 
     sess = tf.Session()
     sess.run(tf.global_variables_initializer())

@@ -42,6 +42,7 @@ if __name__ == '__main__':
 
     s = set_data["size"]
     input_size = (s[0], s[1])
+    num_layers = set_data["num_layers"]
 
     session_name = "weight_sets/" + set_data["session_name"]
     print(session_name, pwd)
@@ -52,7 +53,7 @@ if __name__ == '__main__':
     print("testset shapes: ", data.shape, labels.shape)
 
     if args.template is not None:
-        template_path = args.template
+        template_path = os.path.join("templates", args.template)
     else:
         template_path = os.path.join("templates", "default")
 
@@ -61,7 +62,7 @@ if __name__ == '__main__':
 
     num_intra_class = 10
     num_inter_class = 20
-    comparator = momentnet.Comparator((2, input_size[0]), input_size[1], num_intra_class=num_intra_class, num_inter_class=num_inter_class, layers=10, lambdas=(5, 0.5, 5))
+    comparator = momentnet.Comparator((2, input_size[0]), input_size[1], num_intra_class=num_intra_class, num_inter_class=num_inter_class, layers=num_layers, lambdas=(5, 0.5, 5))
 
     sess = tf.Session()
     sess.run(tf.global_variables_initializer())

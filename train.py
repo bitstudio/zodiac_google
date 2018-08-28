@@ -52,6 +52,7 @@ if __name__ == '__main__':
         set_list = []
 
     # (depth, num_moments)
+    num_layers = 5
     input_size = (256, 32)
     if args.name is not None:
         weight_set_name = args.name
@@ -78,6 +79,7 @@ if __name__ == '__main__':
             "to_date": args.to_date,
             "session_name": session_name,
             "output_classes": num_classes,
+            "num_layers": num_layers,
             "date_created": datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         }, file, sort_keys=True, indent=4)
 
@@ -89,7 +91,7 @@ if __name__ == '__main__':
 
     num_intra_class = 10
     num_inter_class = 20
-    comparator = momentnet.Comparator((2, input_size[0]), input_size[1], num_intra_class=num_intra_class, num_inter_class=num_inter_class, layers=10, lambdas=(5, 0.5, 5))
+    comparator = momentnet.Comparator((2, input_size[0]), input_size[1], num_intra_class=num_intra_class, num_inter_class=num_inter_class, layers=num_layers, lambdas=(5, 0.5, 5))
 
     sess = tf.Session()
     sess.run(tf.global_variables_initializer())
