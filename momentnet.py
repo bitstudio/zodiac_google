@@ -20,7 +20,7 @@ class Comparator:
         ub = tf.get_variable(str(i) + "ub", input_size, dtype=tf.float32, initializer=tf.constant_initializer(1.0))
         wb = tf.get_variable(str(i) + "wb", input_size, dtype=tf.float32, initializer=tf.constant_initializer(1.0))
 
-        residue = (tf.matmul(input, u) + ub) * input
+        residue = tf.nn.elu(tf.matmul(input, u) + ub) * input
         output = tf.nn.elu(tf.matmul(residue, w) + wb) + residue
         return output
 
@@ -51,58 +51,89 @@ class Comparator:
         self.sample_generator = generator.Sample_generator(input_dimension, self.num_intra_class, self.num_inter_class)
 
         self.inputs = tf.placeholder(tf.float32, [None, self.total_input_size])
-        self.samples = tf.placeholder(tf.float32, [None, self.num_intra_class + self.num_inter_class, self.total_input_size])
         self.templates = tf.placeholder(tf.float32, [None, self.total_input_size])
 
         self.first_time = True
 
         a = self.body(self.inputs, self.num_moments, self.layers)
-        z = self.body(tf.reshape(self.samples, [-1, self.total_input_size]), self.num_moments, self.layers)
-        z = tf.reshape(z, [-1, self.num_intra_class + self.num_inter_class, self.num_moments])
         t = self.body(self.templates, self.num_moments, self.layers)
 
         # compute comparison graph
+        self.raw_results = self.moment_compare(tf.expand_dims(a, axis=1), tf.expand_dims(t, axis=0))
+        self.results = tf.argmin(self.raw_results, axis=1)
 
-        with tf.variable_scope("comparator") as scope:
-            self.raw_results = self.moment_compare(tf.expand_dims(a, axis=1), tf.expand_dims(t, axis=0))
-            self.results = tf.argmin(self.raw_results, axis=1)
+        scope = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES)
+        print([x.name for x in scope])
+
+        self.saver = tf.train.Saver(var_list=scope, keep_checkpoint_every_n_hours=1)
+
+    def build_training_graph(self, data_size, batch_size, shuffle):
+
+        self.input_data = tf.placeholder(tf.float32, data_size)
+        self.data_cache = tf.get_variable("data_cache", data_size, dtype=np.float32, trainable=False)
+        self.samples = self.sample_generator.build_all(self.data_cache)
+
+        data = tf.reshape(self.data_cache, [-1, self.total_input_size])
+        samples = tf.reshape(self.samples, [-1, self.num_intra_class + self.num_inter_class, self.total_input_size])
+
+        self.dataset = tf.data.Dataset.from_tensor_slices((data, samples)).batch(batch_size)
+        if shuffle:
+            self.dataset = self.dataset.shuffle(buffer_size=data_size[0] * data_size[1])
+
+        self.data_iter = self.dataset.make_initializable_iterator()  # create the iterator
+        self.next_element = self.data_iter.get_next()
+
+        self.train_inputs = self.next_element[0]
+        self.train_samples = self.next_element[1]
+
+        a = self.body(self.train_inputs, self.num_moments, self.layers)
+        z = self.body(tf.reshape(self.train_samples, [-1, self.total_input_size]), self.num_moments, self.layers)
+        z = tf.reshape(z, [-1, self.num_intra_class + self.num_inter_class, self.num_moments])
 
         # compute cost
-        with tf.variable_scope(scope, reuse=True):
-            self.intra_class_loss = self.moment_compare(tf.expand_dims(a, axis=1), z[:, 0:self.num_intra_class, :])
-            self.inter_class_loss = self.moment_compare(tf.expand_dims(a, axis=1), z[:, self.num_intra_class:, :])
+        self.intra_class_loss = self.moment_compare(tf.expand_dims(a, axis=1), z[:, 0:self.num_intra_class, :])
+        self.inter_class_loss = self.moment_compare(tf.expand_dims(a, axis=1), z[:, self.num_intra_class:, :])
 
         self.overall_cost = tf.reduce_mean(self.intra_class_loss) - tf.reduce_mean(self.inter_class_loss) + 1.0
 
         scope = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES)
         print([x.name for x in scope])
+
         """ out of many algorithms, only Adam converge! A remarkable job for Kingma and Lei Ba!"""
         self.training_op = tf.train.AdamOptimizer(0.00001).minimize(self.overall_cost, var_list=scope)
 
-        self.saver = tf.train.Saver(var_list=scope, keep_checkpoint_every_n_hours=1)
+        self.upload_ops = tf.assign(self.data_cache, self.input_data)
+        self.rebatch_ops = self.data_iter.initializer
 
-    def train(self, sess, data, session_name="weight_sets/test", shuffle=True, batch_size=5, max_iteration=1000, continue_from_last=False):
+    def train(self, data, session_name="weight_sets/test", session=None, shuffle=True, batch_size=5, max_iteration=1000, continue_from_last=False):
+
+        if session is None:
+            sess = tf.Session()
+        else:
+            sess = session
+
+        self.build_training_graph(data.shape, batch_size, shuffle)
+
+        sess.run(tf.global_variables_initializer())
+
         if continue_from_last:
             self.load_session(sess, session_name)
 
-        samples = self.sample_generator.generate(sess, data)
-        data = np.reshape(data, [-1, self.total_input_size])
-        samples = np.reshape(samples, [-1, self.num_intra_class + self.num_inter_class, self.total_input_size])
-
-        indices = np.arange(data.shape[0])
-        if shuffle:
-            np.random.shuffle(indices)
+        sess.run(self.upload_ops, feed_dict={self.input_data: data})
 
         start_time = time.time()
         for step in range(max_iteration):
+            sess.run(self.rebatch_ops)
             sum_loss = 0.0
-            total_batches = data.shape[0] // batch_size
-            for b in range(total_batches):
-                db = data[indices[(b * batch_size):((b + 1) * batch_size)], ...]
-                sb = samples[indices[(b * batch_size):((b + 1) * batch_size)], ...]
-                _, loss = sess.run((self.training_op, self.overall_cost), feed_dict={self.inputs: db, self.samples: sb})
-                sum_loss += loss
-            print(sum_loss / total_batches)
+            counter = 0
+            while True:
+                try:
+                    _, loss = sess.run((self.training_op, self.overall_cost))
+                    sum_loss += loss
+                    counter += 1
+                except tf.errors.OutOfRangeError:
+                    break
+            print(sum_loss / counter)
             if (step + 1) % 100 == 0:
                 self.saver.save(sess, session_name)
                 print("Checkpoint ...")
@@ -113,6 +144,9 @@ class Comparator:
             file.write("Total time ... " + str(elapsed_time) + " seconds")
 
         self.saver.save(sess, session_name)
+
+        if session is None:
+            sess.close()
 
     def load_session(self, sess, session_name):
         print("loading from last save...")
@@ -146,9 +180,8 @@ if __name__ == "__main__":
     net = Comparator((2, 20), 5, num_intra_class=20, num_inter_class=20, layers=5)
 
     sess = tf.Session()
-    sess.run(tf.global_variables_initializer())
 
-    net.train(sess, data)
+    net.train(data, session=sess)
     classes, raw = net.process(sess, np.reshape(data, [-1, 2 * 20]), np.reshape(templates, [-1, 2 * 20]))
     print(classes)
     print(raw)
