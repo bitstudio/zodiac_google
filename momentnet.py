@@ -108,7 +108,10 @@ class Comparator:
     def train(self, data, session_name="weight_sets/test", session=None, shuffle=True, batch_size=5, max_iteration=1000, continue_from_last=False):
 
         if session is None:
-            sess = tf.Session()
+            config = tf.ConfigProto()
+            config.gpu_options.allow_growth = True
+            config.log_device_placement = True
+            sess = tf.Session(config=config)
         else:
             sess = session
 
