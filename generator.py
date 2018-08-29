@@ -45,8 +45,8 @@ class Sample_generator:
 
         def body(X):
             break_point = tf.random_uniform((), 0, self.input_size[1], dtype=tf.int32)
-            a = tf.gather(X, tf.range(break_point, tf.shape(input)[2]), axis=1)
-            b = tf.gather(X, tf.range(break_point), axis=1)
+            a = tf.slice(X, [0, break_point], [-1, -1])
+            b = tf.slice(X, [0, 0], [-1, break_point])
             return tf.concat([a, b], axis=1)
 
         out = tf.map_fn(body, input, parallel_iterations=512, back_prop=False)
