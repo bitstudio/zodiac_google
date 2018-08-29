@@ -24,7 +24,7 @@ class Sample_generator:
             selected_intra_indices = tf.random_uniform([tf.shape(input)[1] * self.num_intra_class], 0, tf.shape(X)[0], dtype=tf.int32)
             return tf.gather(X, selected_intra_indices)
 
-        intra_sample = tf.map_fn(body_intra, input)
+        intra_sample = tf.map_fn(body_intra, input, parallel_iterations=512, back_prop=False)
 
         flat = tf.reshape(input, [-1, self.input_size[0], self.input_size[1]])
 
@@ -35,7 +35,7 @@ class Sample_generator:
             selected_indices = tf.random_uniform([tf.shape(input)[1] * self.num_inter_class], 0, tf.shape(all_indices)[0], dtype=tf.int32)
             return tf.gather(flat, tf.gather(all_indices, selected_indices))
 
-        inter_sample = tf.map_fn(body_inter, tf.range(tf.shape(input)[0]), dtype=tf.float32)
+        inter_sample = tf.map_fn(body_inter, tf.range(tf.shape(input)[0]), dtype=tf.float32, parallel_iterations=512, back_prop=False)
 
         return tf.concat([
             tf.reshape(intra_sample, [-1, self.num_intra_class, self.input_size[0], self.input_size[1]]),
@@ -44,9 +44,12 @@ class Sample_generator:
     def build_shift_graph(self, input):
 
         def body(X):
-            return tf.manip.roll(X, shift=tf.random_uniform((), 0, self.input_size[1], dtype=tf.int32), axis=1)
+            break_point = tf.random_uniform((), 0, self.input_size[1], dtype=tf.int32)
+            a = tf.gather(X, tf.range(break_point, tf.shape(input)[2]), axis=1)
+            b = tf.gather(X, tf.range(break_point), axis=1)
+            return tf.concat([a, b], axis=1)
 
-        out = tf.map_fn(body, input)
+        out = tf.map_fn(body, input, parallel_iterations=512, back_prop=False)
         return out
 
     def generate(self, sess, seed):
@@ -57,9 +60,11 @@ if __name__ == '__main__':
     sess = tf.Session()
     sess.run(tf.global_variables_initializer())
 
-    data = np.tile(np.reshape(np.arange(4), [-1, 1, 1, 1]), [1, 3, 2, 5])
+    np.set_printoptions(threshold=np.nan)
+
+    data = np.reshape(np.arange(4 * 5 * 2 * 10), [4, 5, 2, 10])
     print(data)
-    generator = Sample_generator((2, 5), 1, 2)
+    generator = Sample_generator((2, 10), 1, 2)
     gened = generator.generate(sess, data)
     print(gened)
 
