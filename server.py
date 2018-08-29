@@ -199,6 +199,6 @@ def make_app():
 if __name__ == "__main__":
     app = make_app()
     app.listen(7788)
-    webbrowser.open("http://localhost:7788/index.html")
+    #webbrowser.open("http://localhost:7788/index.html")
     tornado.ioloop.IOLoop.instance().start()
     runner.close_down()
