@@ -63,11 +63,11 @@ class Comparator:
         self.results = tf.argmin(self.raw_results, axis=1)
 
         scope = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES)
-        print([x.name for x in scope])
+        print([(x.name, x.dtype) for x in scope])
 
         self.saver = tf.train.Saver(var_list=scope, keep_checkpoint_every_n_hours=1)
 
-    def build_training_graph(self, data_size, batch_size, shuffle):
+    def build_training_graph(self, data_size, batch_size, shuffle, sub_epoch=1):
 
         self.input_data = tf.placeholder(tf.float32, data_size)
         self.data_cache = tf.get_variable("data_cache", data_size, dtype=np.float32, trainable=False)
@@ -76,7 +76,7 @@ class Comparator:
         data = tf.reshape(self.data_cache, [-1, self.total_input_size])
         samples = tf.reshape(self.samples, [-1, self.num_intra_class + self.num_inter_class, self.total_input_size])
 
-        self.dataset = tf.data.Dataset.from_tensor_slices((data, samples)).batch(batch_size)
+        self.dataset = tf.data.Dataset.from_tensor_slices((data, samples)).batch(batch_size).repeat(sub_epoch)
         if shuffle:
             self.dataset = self.dataset.shuffle(buffer_size=data_size[0] * data_size[1])
 
@@ -105,7 +105,7 @@ class Comparator:
         self.upload_ops = tf.assign(self.data_cache, self.input_data)
         self.rebatch_ops = self.data_iter.initializer
 
-    def train(self, data, session_name="weight_sets/test", session=None, shuffle=True, batch_size=5, max_iteration=1000, continue_from_last=False):
+    def train(self, data, session_name="weight_sets/test", session=None, shuffle=True, batch_size=5, max_iteration=100, continue_from_last=False):
 
         if session is None:
             config = tf.ConfigProto()
@@ -115,7 +115,7 @@ class Comparator:
         else:
             sess = session
 
-        self.build_training_graph(data.shape, batch_size, shuffle)
+        self.build_training_graph(data.shape, batch_size, shuffle, sub_epoch=10)
 
         sess.run(tf.global_variables_initializer())
 
