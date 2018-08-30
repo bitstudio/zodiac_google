@@ -9,13 +9,25 @@ import generator
 import tensorflow as tf
 
 
+def str2bool(v):
+    if v.lower() in ('yes', 'true', 't', 'y', '1'):
+        return True
+    elif v.lower() in ('no', 'false', 'f', 'n', '0'):
+        return False
+    else:
+        raise argparse.ArgumentTypeError('Boolean value expected.')
+
+
 parser = argparse.ArgumentParser()
 parser.add_argument("--name", help="weight set name")
 parser.add_argument("--from_date", help="from date")
 parser.add_argument("--to_date", help="to date")
 parser.add_argument('-l', '--list', nargs='+', help='<Required> Set flag')
 parser.add_argument("--iter", help="training iterations", type=int)
+parser.add_argument("--cont", type=str2bool, nargs='?', const=True, default=False, help="Continue training from the previous saved.")
 args = parser.parse_args()
+
+print(args.cont)
 
 
 def balance_labels(data, labels, num_classes, shuffle=False):
@@ -93,4 +105,4 @@ if __name__ == '__main__':
     num_inter_class = 20
     comparator = momentnet.Comparator((2, input_size[0]), input_size[1], num_intra_class=num_intra_class, num_inter_class=num_inter_class, layers=num_layers, lambdas=(5, 0.5, 5))
 
-    comparator.train(data, session_name="weight_sets/" + session_name, batch_size=min(100, labels.shape[0]), max_iteration=iterations, continue_from_last=False)
+    comparator.train(data, session_name="weight_sets/" + session_name, batch_size=min(100, labels.shape[0]), max_iteration=iterations, continue_from_last=args.cont)
