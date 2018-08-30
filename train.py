@@ -5,8 +5,6 @@ import dataformat
 import numpy as np
 import json
 import momentnet
-import generator
-import tensorflow as tf
 
 
 def str2bool(v):
