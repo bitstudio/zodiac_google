@@ -60,7 +60,7 @@ class ImageHandler(tornado.web.RequestHandler):
             else:
                 msg = ("{\"reference\":\"" + str(ref_number) + "\","
                        "\"classes\":" + util.np2json(classes) + ","
-                       "\"raw\":" + util.np2json(classes) + "}"
+                       "\"raw\":" + util.np2json(raw) + "}"
                        )
                 self.write(msg)
 
@@ -75,7 +75,7 @@ class ImageHandler(tornado.web.RequestHandler):
             else:
                 msg = ("{\"reference\":\"" + str(ref_number) + "\","
                        "\"classes\":" + util.np2json(classes) + ","
-                       "\"raw\":" + util.np2json(classes) + "}"
+                       "\"raw\":" + util.np2json(raw) + "}"
                        )
                 self.write(msg)
 
