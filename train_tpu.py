@@ -37,7 +37,7 @@ def model_fn(features, labels, mode, params):
     loss = model.build_tpu_graph(data, samples)
 
     if mode == tf.estimator.ModeKeys.TRAIN:
-        optimizer = tf.train.GradientDescentOptimizer(learning_rate=0.00001)
+        optimizer = tf.train.AdamOptimizer(learning_rate=0.00001)
         if use_tpu:
             optimizer = tf.contrib.tpu.CrossShardOptimizer(optimizer)
         return tf.contrib.tpu.TPUEstimatorSpec(
