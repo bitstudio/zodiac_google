@@ -41,8 +41,8 @@ def _int64_feature(value):
     return tf.train.Feature(int64_list=tf.train.Int64List(value=[value]))
 
 
-def _bytes_feature(value):
-    return tf.train.Feature(bytes_list=tf.train.BytesList(value=[value]))
+def _float32_feature(value):
+    return tf.train.Feature(float_list=tf.train.FloatList(value=value.reshape(-1)))
 
 
 def convert_to(data, samples, filename):
@@ -54,16 +54,16 @@ def convert_to(data, samples, filename):
     print('Writing', filename)
     with tf.python_io.TFRecordWriter(filename) as writer:
         for index in range(data.shape[0]):
-            raw = data[index].tostring()
-            sample_raw = samples[index].tostring()
+            raw = data[index]
+            sample_raw = samples[index]
             example = tf.train.Example(
                 features=tf.train.Features(
                     feature={
                         'depth': _int64_feature(depth),
                         'features': _int64_feature(features),
                         'sample_count': _int64_feature(sample_count),
-                        'data_raw': _bytes_feature(raw),
-                        'sample_raw': _bytes_feature(sample_raw)
+                        'data_raw': _float32_feature(raw),
+                        'sample_raw': _float32_feature(sample_raw)
                     }))
             writer.write(example.SerializeToString())
 

@@ -54,11 +54,11 @@ def _parse_function(datum):
         'depth': tf.FixedLenFeature((), tf.int32, default_value=0),
         'features': tf.FixedLenFeature((), tf.int32, default_value=0),
         'sample_count': tf.FixedLenFeature((), tf.int32, default_value=0),
-        'data_raw': tf.FixedLenFeature((), tf.string, default_value=""),
-        'sample_raw': tf.FixedLenFeature((), tf.string, default_value="")
+        'data_raw': tf.FixedLenFeature([2, input_size[1]], tf.float32, default_value=""),
+        'sample_raw': tf.FixedLenFeature([num_intra_class + num_inter_class, 2, input_size[1]], tf.float32, default_value="")
     }
     parsed_features = tf.parse_single_example(datum, features)
-    return tf.convert_to_tensor(parsed_features["data_raw"], dtype=tf.float32), tf.convert_to_tensor(parsed_features["sample_raw"], dtype=tf.float32)
+    return parsed_features["data_raw"], parsed_features["sample_raw"]
 
 
 def shadow_input_fn(params):
