@@ -51,14 +51,14 @@ def model_fn(features, labels, mode, params):
 
 def _parse_function(datum):
     features = {
-        'depth': tf.FixedLenFeature((), tf.int32, default_value=0),
-        'features': tf.FixedLenFeature((), tf.int32, default_value=0),
-        'sample_count': tf.FixedLenFeature((), tf.int32, default_value=0),
-        'data_raw': tf.FixedLenFeature([2, input_size[1]], tf.float32, default_value=""),
-        'sample_raw': tf.FixedLenFeature([num_intra_class + num_inter_class, 2, input_size[1]], tf.float32, default_value="")
+        'depth': tf.FixedLenFeature((), tf.int64, default_value=0),
+        'features': tf.FixedLenFeature((), tf.int64, default_value=0),
+        'sample_count': tf.FixedLenFeature((), tf.int64, default_value=0),
+        'data_raw': tf.FixedLenFeature((), tf.string, default_value=""),
+        'sample_raw': tf.FixedLenFeature((), tf.string, default_value="")
     }
     parsed_features = tf.parse_single_example(datum, features)
-    return parsed_features["data_raw"], parsed_features["sample_raw"]
+    return tf.decode_raw(parsed_features["data_raw"], tf.float32), tf.decode_raw(parsed_features["sample_raw"], tf.float32)
 
 
 def shadow_input_fn(params):

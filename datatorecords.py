@@ -41,29 +41,30 @@ def _int64_feature(value):
     return tf.train.Feature(int64_list=tf.train.Int64List(value=[value]))
 
 
-def _float32_feature(value):
-    return tf.train.Feature(float_list=tf.train.FloatList(value=value.reshape(-1)))
+def _bytes_feature(value):
+    return tf.train.Feature(bytes_list=tf.train.BytesList(value=[value]))
 
 
 def convert_to(data, samples, filename):
 
-    depth = data.shape[1]
-    features = data.shape[2]
+    depth = data.shape[2]
+    features = data.shape[3]
     sample_count = samples.shape[1]
+    data = np.reshape(data, [-1, data.shape[2], data.shape[3]])
 
     print('Writing', filename)
     with tf.python_io.TFRecordWriter(filename) as writer:
         for index in range(data.shape[0]):
-            raw = data[index]
-            sample_raw = samples[index]
+            raw = data[index].tostring()
+            sample_raw = samples[index].tostring()
             example = tf.train.Example(
                 features=tf.train.Features(
                     feature={
                         'depth': _int64_feature(depth),
                         'features': _int64_feature(features),
                         'sample_count': _int64_feature(sample_count),
-                        'data_raw': _float32_feature(raw),
-                        'sample_raw': _float32_feature(sample_raw)
+                        'data_raw': _bytes_feature(tf.compat.as_bytes(raw)),
+                        'sample_raw': _bytes_feature(tf.compat.as_bytes(sample_raw))
                     }))
             writer.write(example.SerializeToString())
 
@@ -80,6 +81,8 @@ if __name__ == '__main__':
     # (depth, num_moments)
     input_size = (256, 32)
     num_classes = 16
+    num_intra_class = 10
+    num_inter_class = 20
 
     pwd = os.path.join(os.path.dirname(os.path.abspath(__file__)), "artifacts", "records")
     if not os.path.exists(pwd):
@@ -92,10 +95,32 @@ if __name__ == '__main__':
     data, labels = balance_labels(data, labels, num_classes)
     print(data.shape, labels.shape)
 
-    generator = genclass.Sample_generator((2, input_size[0]), 10, 20)
+    generator = genclass.Sample_generator((2, input_size[0]), num_intra_class, num_inter_class)
     sess = tf.Session()
     sess.run(tf.global_variables_initializer())
     samples = generator.generate(sess, data)
-    sess.close()
 
     convert_to(data, samples, filename)
+
+    def _parse_function(datum):
+        features = {
+            'depth': tf.FixedLenFeature((), tf.int64, default_value=0),
+            'features': tf.FixedLenFeature((), tf.int64, default_value=0),
+            'sample_count': tf.FixedLenFeature((), tf.int64, default_value=0),
+            'data_raw': tf.FixedLenFeature([], tf.string, default_value=""),
+            'sample_raw': tf.FixedLenFeature([], tf.string, default_value="")
+        }
+        parsed_features = tf.parse_single_example(datum, features)
+        return tf.decode_raw(parsed_features["data_raw"], tf.float32), tf.decode_raw(parsed_features["sample_raw"], tf.float32)
+
+    """train_input_fn defines the input pipeline used for training."""
+    batch_size = 100
+
+    dataset = tf.data.TFRecordDataset(filename)
+    dataset = dataset.map(_parse_function)  # Parse the record into tensors.
+    dataset = dataset.repeat()  # Repeat the input indefinitely.
+    dataset = dataset.apply(tf.contrib.data.batch_and_drop_remainder(batch_size))
+    iterator = dataset.make_initializable_iterator()
+    data, samples = iterator.get_next()
+
+    sess.close()
