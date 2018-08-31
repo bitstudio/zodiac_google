@@ -68,6 +68,18 @@ class Comparator:
 
         self.saver = tf.train.Saver(var_list=scope, keep_checkpoint_every_n_hours=1)
 
+    def build_tpu_graph(self, data, samples):
+        a = self.body(tf.reshape(data, [-1, self.total_input_size]), self.num_moments, self.layers)
+        z = self.body(tf.reshape(samples, [-1, self.total_input_size]), self.num_moments, self.layers)
+        z = tf.reshape(z, [-1, self.num_intra_class + self.num_inter_class, self.num_moments])
+
+        # compute cost
+        intra_class_loss = self.moment_compare(tf.expand_dims(a, axis=1), z[:, 0:self.num_intra_class, :])
+        inter_class_loss = self.moment_compare(tf.expand_dims(a, axis=1), z[:, self.num_intra_class:, :])
+
+        overall_cost = tf.reduce_mean(intra_class_loss) - tf.reduce_mean(inter_class_loss) + 1.0
+        return overall_cost
+
     def build_training_graph(self, data_size, batch_size, shuffle, sub_epoch=1):
 
         self.input_data = tf.placeholder(tf.float32, data_size)
