@@ -61,7 +61,7 @@ class Comparator:
         # compute comparison graph
         self.raw_results = self.moment_compare(tf.expand_dims(a, axis=1), tf.expand_dims(t, axis=0))
         self.results = tf.argmin(self.raw_results, axis=1)
-        self.raw_confidence = 1.0 + self.raw_results[:, self.results]
+        self.raw_confidence = - self.raw_results
 
         scope = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES)
         print([(x.name, x.dtype) for x in scope])
