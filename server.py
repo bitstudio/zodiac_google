@@ -54,12 +54,13 @@ class ImageHandler(tornado.web.RequestHandler):
 
         if image is not None:
             frame = util.base64string2array(image[22:])
-            classes = runner.process(frame)
+            classes, raw = runner.process(frame)
             if classes is None:
                 self.write("The network has yet been setup.")
             else:
                 msg = ("{\"reference\":\"" + str(ref_number) + "\","
-                       "\"classes\":" + util.np2json(classes) + "}"
+                       "\"classes\":" + util.np2json(classes) + ","
+                       "\"raw\":" + util.np2json(classes) + "}"
                        )
                 self.write(msg)
 
@@ -68,12 +69,13 @@ class ImageHandler(tornado.web.RequestHandler):
             for img_str in images:
                 frames.append(util.base64string2array(img_str[22:]))
 
-            classes = runner.process(frames)
+            classes, raw = runner.process(frames)
             if classes is None:
                 self.write("The network has yet been setup.")
             else:
                 msg = ("{\"reference\":\"" + str(ref_number) + "\","
-                       "\"classes\":" + util.np2json(classes) + "}"
+                       "\"classes\":" + util.np2json(classes) + ","
+                       "\"raw\":" + util.np2json(classes) + "}"
                        )
                 self.write(msg)
 
@@ -199,6 +201,6 @@ def make_app():
 if __name__ == "__main__":
     app = make_app()
     app.listen(7788)
-    #webbrowser.open("http://localhost:7788/index.html")
+    # webbrowser.open("http://localhost:7788/index.html")
     tornado.ioloop.IOLoop.instance().start()
     runner.close_down()

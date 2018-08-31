@@ -96,7 +96,7 @@ class Runner:
             classes, raw = self.comparator.process(self.sess, np.reshape(data, [-1, self.size[0] * 2]), np.reshape(self.templates, [-1, self.size[0] * 2]))
             classes = self.template_labels[classes, 0]
 
-        return classes
+        return classes, raw
 
     def close_down(self):
         if self.running:
