@@ -70,7 +70,7 @@ def shadow_input_fn(params):
     dataset = dataset.map(_parse_function)  # Parse the record into tensors.
     dataset = dataset.repeat()  # Repeat the input indefinitely.
     dataset = dataset.apply(tf.contrib.data.batch_and_drop_remainder(batch_size))
-    iterator = dataset.make_initializable_iterator()
+    iterator = dataset.make_one_shot_iterator()
     data, samples = iterator.get_next()
 
     return data, samples
@@ -100,7 +100,7 @@ def main(argv):
         config=run_config)
 
     # TPUEstimator.train *requires* a max_steps argument.
-    estimator.train(input_fn=shadow_input_fn, max_steps=100)
+    estimator.train(input_fn=shadow_input_fn, max_steps=10000)
 
 
 if __name__ == "__main__":
