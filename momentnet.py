@@ -61,6 +61,7 @@ class Comparator:
         # compute comparison graph
         self.raw_results = self.moment_compare(tf.expand_dims(a, axis=1), tf.expand_dims(t, axis=0))
         self.results = tf.argmin(self.raw_results, axis=1)
+        self.raw_confidence = 1.0 + self.raw_results[:, self.results]
 
         scope = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES)
         print([(x.name, x.dtype) for x in scope])
@@ -159,8 +160,8 @@ class Comparator:
         self.saver.restore(sess, tf.train.latest_checkpoint(directory))
 
     def process(self, sess, data, templates):
-        results, raw_results = sess.run((self.results, self.raw_results), feed_dict={self.inputs: data, self.templates: templates})
-        return results, raw_results
+        results, raw_confs = sess.run((self.results, self.raw_confidence), feed_dict={self.inputs: data, self.templates: templates})
+        return results, raw_confs
 
 
 def sample_shift_shuffle(x, count):
