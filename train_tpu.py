@@ -24,13 +24,15 @@ num_inter_class = 20
 use_tpu = False
 
 
-def model_fn(data, samples, mode, params):
+def model_fn(features, labels, mode, params):
     """model_fn constructs the ML model used to predict handwritten digits."""
 
     del params
     if mode == tf.estimator.ModeKeys.PREDICT:
         raise RuntimeError("mode {} is not supported yet".format(mode))
 
+    data = features
+    samples = labels
     model = momentnet.Comparator((2, input_size[0]), input_size[1], num_intra_class=num_intra_class, num_inter_class=num_inter_class, layers=5)
     loss = model.build_tpu_graph(data, samples)
 
@@ -79,7 +81,7 @@ def main(argv):
     tf.logging.set_verbosity(tf.logging.INFO)
 
     tpu_cluster_resolver = tf.contrib.cluster_resolver.TPUClusterResolver(
-        "tpu_for_shadow"
+        "tpu-for-shadow"
     )
 
     run_config = tf.contrib.tpu.RunConfig(
