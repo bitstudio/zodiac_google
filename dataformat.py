@@ -115,7 +115,7 @@ def read_data_directory(formatter, from_date, to_date, set_list):
     return data, labels
 
 
-def read_template_directory(formatter, path):
+def read_template_directory(formatter, path, with_flip=False):
 
     data = []
     labels = []
@@ -129,6 +129,9 @@ def read_template_directory(formatter, path):
         ts, label, _ = formatter.read_datafile(os.path.join(template_dir, filename))
         data.append(ts)
         labels.append(label)
+        if with_flip:
+            data.append(np.flip(ts, axis=-1))
+            labels.append(label)
 
     data = np.asarray(data, dtype=np.float32)
     labels = np.asarray(labels, dtype=np.int32)
