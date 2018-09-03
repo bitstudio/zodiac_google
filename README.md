@@ -36,22 +36,22 @@ Moment is the sum of the data up to a number of exponent.
 ## Moment network
 
 ### Residue network
-	
-	Based on our setting, though residue net supposes to help resolve exploding/vanishing gradient issues.
-	It's not good enough.
+
+Based on our setting, though residue net supposes to help resolve exploding/vanishing gradient issues.
+It's not good enough.
 
 ### Gated Residue network
-	
-	Based from LSTM, could represent residue network, higher expressive power.
+
+Based from LSTM, could represent residue network, higher expressive power.
 
 
 ## Implementation
 
 ### Tensorflow
-	map_fn is slow. GPU utility drops there.
+map_fn is slow. GPU utility drops there.
 
 ### TPU
-	Can't do map_fn on TPU at all. This is the current limitation. We have to resort to pre-generate a lot of sample
+Can't do map_fn on TPU at all. This is the current limitation. We have to resort to pre-generate a lot of sample beforehand.
 
 
 ## Results

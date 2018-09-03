@@ -68,7 +68,7 @@ class Comparator:
 
         self.saver = tf.train.Saver(var_list=scope, keep_checkpoint_every_n_hours=1)
 
-    def build_training_graph(self, data_size, batch_size, shuffle, sub_epoch=1):
+    def build_training_graph(self, data_size, batch_size, shuffle):
 
         self.input_data = tf.placeholder(tf.float32, data_size)
         self.data_cache = tf.get_variable("data_cache", data_size, dtype=np.float32, trainable=False)
@@ -77,15 +77,24 @@ class Comparator:
         data = tf.reshape(self.data_cache, [-1, self.total_input_size])
         samples = tf.reshape(self.samples, [-1, self.num_intra_class + self.num_inter_class, self.total_input_size])
 
-        self.dataset = tf.data.Dataset.from_tensor_slices((data, samples)).batch(batch_size).repeat(sub_epoch)
+        total_data = data_size[0] * data_size[1]
+        total_batches = int(total_data / batch_size)
+
+        self.batch_index = tf.get_variable("batch_index", (), dtype=np.int32, trainable=False)
+        self.dataset = tf.get_variable("dataset", [total_batches * batch_size, self.total_input_size], dtype=np.float32, trainable=False)
+        self.sampleset = tf.get_variable("sampleset", [total_batches * batch_size, self.num_intra_class + self.num_inter_class, self.total_input_size], dtype=np.float32, trainable=False)
+
+        indices = tf.mod(tf.range(total_data), (total_batches * batch_size))
         if shuffle:
-            self.dataset = self.dataset.shuffle(buffer_size=data_size[0] * data_size[1])
+            indices = tf.random_shuffle(indices)
 
-        self.data_iter = self.dataset.make_initializable_iterator()  # create the iterator
-        self.next_element = self.data_iter.get_next()
+        self.dataset_init = tf.scatter_update(self.dataset, indices, data)
+        self.sampleset_init = tf.scatter_update(self.sampleset, indices, samples)
+        self.iter_init = tf.assign(self.batch_index, 0)
+        self.iter_next = tf.assign(self.batch_index, tf.mod(self.batch_index + 1, total_batches))
 
-        self.train_inputs = self.next_element[0]
-        self.train_samples = self.next_element[1]
+        self.train_inputs = tf.reshape(self.dataset, [-1, batch_size, self.total_input_size])[self.batch_index]
+        self.train_samples = tf.reshape(self.sampleset, [-1, batch_size, self.num_intra_class + self.num_inter_class, self.total_input_size])[self.batch_index]
 
         a = self.body(self.train_inputs, self.num_moments, self.layers)
         z = self.body(tf.reshape(self.train_samples, [-1, self.total_input_size]), self.num_moments, self.layers)
@@ -101,12 +110,18 @@ class Comparator:
         print([x.name for x in scope])
 
         """ out of many algorithms, only Adam converge! A remarkable job for Kingma and Lei Ba!"""
-        self.training_op = tf.train.AdamOptimizer(0.00001).minimize(self.overall_cost, var_list=scope)
+        self.training_op = (tf.train.AdamOptimizer(0.00001).minimize(self.overall_cost, var_list=scope), self.iter_next)
 
         self.upload_ops = tf.assign(self.data_cache, self.input_data)
-        self.rebatch_ops = self.data_iter.initializer
+        self.rebatch_ops = (self.iter_init, self.dataset_init, self.sampleset_init)
 
     def train(self, data, session_name="weight_sets/test", session=None, shuffle=True, batch_size=5, max_iteration=100, continue_from_last=False):
+
+        # builder = tf.profiler.ProfileOptionBuilder
+        # opts = builder(builder.time_and_memory()).order_by('micros').build()
+
+        # pwd = os.path.join(os.path.dirname(os.path.abspath(__file__)), "artifacts", "profile")
+        # with tf.contrib.tfprof.ProfileContext(pwd, trace_steps=[], dump_steps=[]) as pctx:
 
         if session is None:
             config = tf.ConfigProto()
@@ -116,7 +131,8 @@ class Comparator:
         else:
             sess = session
 
-        self.build_training_graph(data.shape, batch_size, shuffle, sub_epoch=10)
+        batch_size = min(batch_size, data.shape[0] * data.shape[1])
+        self.build_training_graph(data.shape, batch_size, shuffle)
 
         sess.run(tf.global_variables_initializer())
 
@@ -125,27 +141,30 @@ class Comparator:
 
         sess.run(self.upload_ops, feed_dict={self.input_data: data})
 
+        sub_epoch = 10
         start_time = time.time()
         for step in range(max_iteration):
             sess.run(self.rebatch_ops)
             sum_loss = 0.0
-            counter = 0
-            while True:
-                try:
-                    _, loss = sess.run((self.training_op, self.overall_cost))
-                    sum_loss += loss
-                    counter += 1
-                except tf.errors.OutOfRangeError:
-                    break
-            print(sum_loss / counter)
+            total_batches = int(data.shape[0] * data.shape[1] / batch_size)
+            for i in range(total_batches * sub_epoch):
+                # pctx.trace_next_step()
+                _, loss = sess.run((self.training_op, self.overall_cost))
+                sum_loss += loss
+            print(sum_loss / (total_batches * sub_epoch))
             if (step + 1) % 100 == 0:
                 self.saver.save(sess, session_name)
                 print("Checkpoint ...")
+
+                # pctx.dump_next_step()
+
         elapsed_time = time.time() - start_time
 
         with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "artifacts", "log.txt"), "w") as file:
             file.write(str(device_lib.list_local_devices()))
             file.write("Total time ... " + str(elapsed_time) + " seconds")
+
+        # pctx.profiler.profile_operations(options=opts)
 
         self.saver.save(sess, session_name)
 
@@ -174,7 +193,6 @@ def sample_shift_shuffle(x, count):
 
 
 if __name__ == "__main__":
-
     data = np.asarray([[1, 2, 3, 4, 5], [6, 7, 8, 9, 0]])
     print(sample_shift_shuffle(data, 4))
 
@@ -184,8 +202,8 @@ if __name__ == "__main__":
     net = Comparator((2, 20), 5, num_intra_class=20, num_inter_class=20, layers=5)
 
     sess = tf.Session()
-
     net.train(data, session=sess)
+
     classes, raw = net.process(sess, np.reshape(data, [-1, 2 * 20]), np.reshape(templates, [-1, 2 * 20]))
     print(classes)
     print(raw)
