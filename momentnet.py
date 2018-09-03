@@ -78,7 +78,7 @@ class Comparator:
         samples = tf.reshape(self.samples, [-1, self.num_intra_class + self.num_inter_class, self.total_input_size])
 
         total_data = data_size[0] * data_size[1]
-        total_batches = int(total_data / batch_size)
+        total_batches = int(total_data / batch_size) + 1
 
         self.batch_index = tf.get_variable("batch_index", (), dtype=np.int32, trainable=False)
         self.dataset = tf.get_variable("dataset", [total_batches * batch_size, self.total_input_size], dtype=np.float32, trainable=False)
@@ -126,7 +126,7 @@ class Comparator:
         if session is None:
             config = tf.ConfigProto()
             config.gpu_options.allow_growth = True
-            config.log_device_placement = True
+            # config.log_device_placement = True
             sess = tf.Session(config=config)
         else:
             sess = session
