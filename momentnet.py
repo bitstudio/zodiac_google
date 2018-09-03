@@ -84,7 +84,7 @@ class Comparator:
         self.dataset = tf.get_variable("dataset", [total_batches * batch_size, self.total_input_size], dtype=np.float32, trainable=False)
         self.sampleset = tf.get_variable("sampleset", [total_batches * batch_size, self.num_intra_class + self.num_inter_class, self.total_input_size], dtype=np.float32, trainable=False)
 
-        print(total_data, " vs ", total_batches * batch_size)
+        print(total_data, " vs ", total_batches * batch_size, " of ", batch_size)
 
         indices = tf.mod(tf.range(total_data), (total_batches * batch_size))
         if shuffle:
