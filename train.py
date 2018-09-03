@@ -25,8 +25,6 @@ parser.add_argument("--iter", help="training iterations", type=int)
 parser.add_argument("--cont", type=str2bool, nargs='?', const=True, default=False, help="Continue training from the previous saved.")
 args = parser.parse_args()
 
-print(args.cont)
-
 
 def balance_labels(data, labels, num_classes, shuffle=False):
 

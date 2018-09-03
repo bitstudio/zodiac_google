@@ -17,6 +17,13 @@ parser.add_argument('-t', '--template', help="template directory path")
 args = parser.parse_args()
 
 
+def random_flip(data):
+    flat_indices = np.arange(0, data.shape[0] * data.shape[1], 2)
+    temp = np.reshape(data, [-1, data.shape[2], data.shape[3]])
+    temp[flat_indices, :] = np.flip(temp[flat_indices], axis=-1)
+    return np.reshape(temp, data.shape)
+
+
 if __name__ == '__main__':
 
     from_date = dataformat.parse_date_string(args.from_date)
@@ -50,6 +57,7 @@ if __name__ == '__main__':
     formatter = dataformat.DataFormat(input_size[0])
 
     data, labels = dataformat.read_data_directory(formatter, from_date, to_date, set_list)
+    # data = random_flip(data)
     print("testset shapes: ", data.shape, labels.shape)
 
     if args.template is not None:
