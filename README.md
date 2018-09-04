@@ -12,7 +12,7 @@ This scheme calls for learning to learn or one-shot learning where the heart of 
 
 ### Learn to compare
 
-Humans are more or less capable dealing with classification problem. Given a new object and a list of categorial examples to compare with, we can immediately identify to which category that object belongs. Given a new example set, we can do it again without fail, though the results may vary depend on personal learned metric of similarity. That's right. We want the model to establish a metric of similarity from a set of training examples. 
+Humans are more or less capable dealing with classification problem. Given a new object and a list of categorial examples to compare with, we can immediately identify to which category that object belongs. Given a new example set, we can do it again without fail, though the results may vary depending on personal learned metric of similarity. That's right. We want the model to establish a metric of similarity from a set of training examples. 
 
 A metric implies a distance function, $d : S \times S \to R$, working on a closed set of features $S$ to compare a pair of two of such members. The model is a function parameterized by a set of weights $\vec{w}$ that converts an example into this feature space, $f : D \to S$ where $D$ is the space of input and example data. 
    
@@ -36,7 +36,7 @@ The dataset contains many binary shadow projection images not unlike those of [M
 
 ![enter image description here](https://bit-shadowplay.com/gen.png)
 
-Despite the difference in dimension, all we really need is the shape of the hand shadow in each image. So we extract shadow contour from the image, and resample the contour in the polar coordinate to have a fixed length of a regular angular interval. Doing this have many benefits:
+Despite the difference in dimension, all we really need is the shape of the hand shadow in each image. So we extract shadow contour from the image, and resample the contour in the polar coordinate to have a fixed length of a regular angular interval. Doing this has many benefits:
 
 ### Translation and scale invariant
 
@@ -63,7 +63,7 @@ As previously mentioned, we directly compare the features to those of the class 
 We trained the model on google cloud virtual machine with nvidia Tesla P100. We wrote a network graph that takes the after-normalized contours as the input. The network performs internal random sampling, randomly rotate the data, and train the model on GPU. The code can be found [here](https://github.com/PVirie/zodiac).
 
 ### TPU
-TPU offers an increasing speed for training. But we can no longer peprfrom internal ramdon sampling and rotate on TPU at the moment due to API limitation. The code for TPU can be found in the `tpu` branch of the same repository.
+TPU offers an increasing speed for training. But we can no longer peprfrom internal ramdon sampling and rotate on TPU at the moment due to API limitations. The code for TPU can be found in the `tpu` branch of the same repository.
 
 ## Results
 
