@@ -70,3 +70,21 @@ TPU offers an increasing speed for training. But we can no longer perform intern
 A shadowplay system that we can change class examples on the fly. Want to add or change label? Simply update the example and that's it. The system can't recognize a hand gesture correctly? Simply take a snapshot of that gesture and add it to the examples to refine the results.
 
 A more detailed performance results will be available after.
+
+## Installation
+
+### With GPU supports
+
+Install CUDA then:
+`pip3 install tensorflow-gpu opencv-python matplotlib pillow tornado`
+
+### Without GPU supports
+`pip3 install tensowflow opencv-python matplotlib pillow tornado`
+
+## Usages
+
+### Training
+`python3 train.py --list <directory name> --iter <iterations> --name <weight set name>`
+
+### Start server
+`python3 server.py`
