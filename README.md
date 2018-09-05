@@ -63,7 +63,7 @@ As previously mentioned, we directly compare the features to those of the class 
 We trained the model on google cloud virtual machine with nvidia Tesla P100. We wrote a network graph that takes the after-normalized contours as the input. The network performs internal random sampling, randomly rotate the data, and train the model on GPU. The code can be found [here](https://github.com/PVirie/zodiac).
 
 ### TPU
-TPU offers an increasing speed for training. But we can no longer peprfrom internal ramdon sampling and rotate on TPU at the moment due to API limitations. The code for TPU can be found in the `tpu` branch of the same repository.
+TPU offers an increasing speed for training. But we can no longer perform internal random sampling and rotate on TPU at the moment due to API limitation. The code for TPU can be found in the `tpu` branch of the same repository.
 
 ## Results
 
