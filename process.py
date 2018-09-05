@@ -88,15 +88,16 @@ class Runner:
             for i, frame in enumerate(frames):
                 data[i, ...] = self.formatter.format(frame)
             classes, raw = self.comparator.process(self.sess, np.reshape(data, [-1, self.size[0] * 2]), np.reshape(self.templates, [-1, self.size[0] * 2]))
-            raw = raw[:, classes]
+            raw = raw[:, classes].flatten()
             classes = self.template_labels[classes, 0]
 
         else:
             frame = frames
             data = self.formatter.format(frame)
             classes, raw = self.comparator.process(self.sess, np.reshape(data, [-1, self.size[0] * 2]), np.reshape(self.templates, [-1, self.size[0] * 2]))
-            raw = raw[:, classes]
+            raw = raw[:, classes].flatten()
             classes = self.template_labels[classes, 0]
+            print(classes.shape, raw.shape)
 
         return classes, raw
 
