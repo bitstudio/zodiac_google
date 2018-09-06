@@ -67,7 +67,7 @@ if __name__ == '__main__':
         set_list = []
 
     # (depth, num_moments)
-    num_layers = 5
+    num_layers = 10
     input_size = (256, 32)
     if args.name is not None:
         weight_set_name = args.name
