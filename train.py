@@ -97,7 +97,7 @@ if __name__ == '__main__':
         os.makedirs(pwd)
 
     session_name = weight_set_name + "/test"
-    print(session_name, pwd)
+    print(session_name, pwd, input_size, num_layers)
 
     with open(pwd + "/set.json", "w") as file:
         json.dump({
