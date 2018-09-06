@@ -22,6 +22,9 @@ parser.add_argument("--from_date", help="from date")
 parser.add_argument("--to_date", help="to date")
 parser.add_argument('-l', '--list', nargs='+', help='<Required> Set flag')
 parser.add_argument("--iter", help="training iterations", type=int)
+parser.add_argument("--layers", help="total resnet layers", type=int)
+parser.add_argument("--data_depth", help="data depth", type=int)
+parser.add_argument("--feature_depth", help="feature depth", type=int)
 parser.add_argument("--cont", type=str2bool, nargs='?', const=True, default=False, help="Continue training from the previous saved.")
 args = parser.parse_args()
 
@@ -68,12 +71,23 @@ if __name__ == '__main__':
 
     # (depth, num_moments)
     num_layers = 10
+    if args.layers is not None:
+        num_layers = args.layers
+
     input_size = (256, 32)
+    if args.data_depth is not None:
+        input_size[0] = args.data_depth
+
+    if args.feature_depth is not None:
+        input_size[1] = args.feature_depth
+
     if args.name is not None:
         weight_set_name = args.name
     else:
         weight_set_name = datetime.now().strftime("%Y-%m-%d")
+
     num_classes = 16
+
     iterations = 5000
     if args.iter:
         iterations = args.iter

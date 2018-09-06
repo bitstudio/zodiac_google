@@ -189,11 +189,21 @@ class SetHandler(tornado.web.RequestHandler):
         self.write("{\"result\":" + ("true" if result else "false") + "}")
 
 
+class DownloadHandler(tornado.web.RequestHandler):
+    def get(self):
+        path = runner.archive_selected()
+        with open(path, 'rb') as f:
+            data = f.read()
+            self.write(data)
+        self.finish()
+
+
 def make_app():
     return tornado.web.Application([
         (r"/classify", ImageHandler),
         (r"/set", SetHandler),
         (r"/collect", SampleHandler),
+        (r"/download.tar.gz", DownloadHandler),
         (r'/(.*)', tornado.web.StaticFileHandler, {'path': static_path})
     ])
 

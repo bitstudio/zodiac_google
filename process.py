@@ -4,6 +4,7 @@ import momentnet
 import tensorflow as tf
 import json
 import dataformat
+import shutil
 
 weight_set_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "weight_sets")
 weight_sets = []
@@ -114,6 +115,18 @@ class Runner:
     def get_template_sets(self):
         discover_template_set()
         return template_paths, self.template_index
+
+    def archive_selected(self):
+        artifact_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), "artifacts")
+        pack_dir = os.path.join(artifact_dir, "pack")
+        if not os.path.exists(pack_dir):
+            os.makedirs(os.path.join(artifact_dir, "pack"))
+        weight_path = "/".join(weight_sets[self.index]["session_name"].split("/")[:-1])
+        print(weight_path)
+        shutil.make_archive(os.path.join(artifact_dir, "pack", "weights"), 'tar', os.path.join(weight_set_path, weight_path))
+        shutil.make_archive(os.path.join(artifact_dir, "pack", "templates"), 'tar', os.path.join(template_paths[self.template_index]))
+        shutil.make_archive(os.path.join(artifact_dir, "pack"), 'gztar', os.path.join(artifact_dir, "pack"))
+        return os.path.join(artifact_dir, "pack.tar.gz")
 
 
 if __name__ == '__main__':

@@ -149,12 +149,11 @@ class Comparator:
             sess.run(self.rebatch_ops)
             sum_loss = 0.0
             total_batches = int(data.shape[0] * data.shape[1] / batch_size)
-            print(total_batches)
             for i in range(total_batches * sub_epoch):
                 # pctx.trace_next_step()
                 _, loss = sess.run((self.training_op, self.overall_cost))
                 sum_loss += loss
-            print(sum_loss / (total_batches * sub_epoch))
+            print(step, " : ", sum_loss / (total_batches * sub_epoch))
             if (step + 1) % 100 == 0:
                 self.saver.save(sess, session_name)
                 print("Checkpoint ...")
