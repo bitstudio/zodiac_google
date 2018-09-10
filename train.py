@@ -116,7 +116,7 @@ if __name__ == '__main__':
 
     data, labels = dataformat.read_data_directory(formatter, from_date, to_date, set_list)
     data, labels = balance_labels(data, labels, num_classes)
-    data = flip_data(data, as_diff_class=False)
+    data = flip_data(data, as_diff_class=True)
     print(data.shape, labels.shape)
 
     num_intra_class = 10
