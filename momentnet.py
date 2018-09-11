@@ -113,7 +113,7 @@ class Comparator:
 
         global_step = tf.Variable(0, trainable=False)
         starter_learning_rate = 0.0001
-        learning_rate = tf.train.exponential_decay(starter_learning_rate, global_step, 10, 0.94, staircase=True)
+        learning_rate = tf.train.exponential_decay(starter_learning_rate, global_step, 10000, 0.96, staircase=True)
 
         """ out of many algorithms, only Adam converge! A remarkable job for Kingma and Lei Ba!"""
         self.training_op = (tf.train.AdamOptimizer(learning_rate).minimize(self.overall_cost, var_list=scope), self.iter_next)

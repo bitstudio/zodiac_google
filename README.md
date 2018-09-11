@@ -88,3 +88,6 @@ Install CUDA then:
 
 ### Start server
 `python3 server.py`
+
+### Start via launcher
+`python3 launch.py`
