@@ -79,7 +79,7 @@ Install CUDA then:
 `pip3 install tensorflow-gpu opencv-python matplotlib pillow tornado`
 
 ### Without GPU supports
-`pip3 install tensowflow opencv-python matplotlib pillow tornado`
+`pip3 install tensorflow opencv-python matplotlib pillow tornado`
 
 ## Usages
 
