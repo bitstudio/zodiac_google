@@ -111,8 +111,12 @@ class Comparator:
         scope = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES)
         print([x.name for x in scope])
 
+        global_step = tf.Variable(0, trainable=False)
+        starter_learning_rate = 0.0001
+        learning_rate = tf.train.exponential_decay(starter_learning_rate, global_step, 10, 0.94, staircase=True)
+
         """ out of many algorithms, only Adam converge! A remarkable job for Kingma and Lei Ba!"""
-        self.training_op = (tf.train.AdamOptimizer(0.00001).minimize(self.overall_cost, var_list=scope), self.iter_next)
+        self.training_op = (tf.train.AdamOptimizer(learning_rate).minimize(self.overall_cost, var_list=scope), self.iter_next)
 
         self.upload_ops = tf.assign(self.data_cache, self.input_data)
         self.rebatch_ops = (self.iter_init, self.dataset_init, self.sampleset_init)
