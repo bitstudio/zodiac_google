@@ -54,13 +54,14 @@ class ImageHandler(tornado.web.RequestHandler):
 
         if image is not None:
             frame = util.base64string2array(image[22:])
-            classes, raw = runner.process(frame)
+            classes, raw, flip_or_not = runner.process(frame)
             if classes is None:
                 self.write("The network has yet been setup.")
             else:
                 msg = ("{\"reference\":\"" + str(ref_number) + "\","
                        "\"classes\":" + util.np2json(classes) + ","
-                       "\"raw\":" + util.np2json(raw) + "}"
+                       "\"raw\":" + util.np2json(raw) + ","
+                       "\"flip\":" + util.np2json(flip_or_not < 0) + "}"
                        )
                 self.write(msg)
 
@@ -69,13 +70,14 @@ class ImageHandler(tornado.web.RequestHandler):
             for img_str in images:
                 frames.append(util.base64string2array(img_str[22:]))
 
-            classes, raw = runner.process(frames)
+            classes, raw, flip_or_not = runner.process(frames)
             if classes is None:
                 self.write("The network has yet been setup.")
             else:
                 msg = ("{\"reference\":\"" + str(ref_number) + "\","
                        "\"classes\":" + util.np2json(classes) + ","
-                       "\"raw\":" + util.np2json(raw) + "}"
+                       "\"raw\":" + util.np2json(raw) + ","
+                       "\"flip\":" + util.np2json(flip_or_not < 0) + "}"
                        )
                 self.write(msg)
 

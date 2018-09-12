@@ -33,7 +33,7 @@ def discover_template_set():
     for name in os.listdir(template_set_path):
         pwd = os.path.join(template_set_path, name)
         if os.path.isdir(pwd):
-            template_paths.append(pwd)
+            template_paths.append(name)
 
 
 discover_template_set()
@@ -50,7 +50,7 @@ class Runner:
         if len(template_paths) < template_index:
             return False
         self.template_index = template_index
-        self.templates, self.template_labels = dataformat.read_template_directory(self.formatter, template_paths[self.template_index], with_flip=True)
+        self.templates, self.template_labels = dataformat.read_template_directory(self.formatter, os.path.join(template_set_path, template_paths[self.template_index]), with_flip=True)
         print(template_paths[self.template_index])
         return True
 
@@ -88,19 +88,20 @@ class Runner:
             data = np.zeros([len(frames), 2, self.size[0]], dtype=np.float32)
             for i, frame in enumerate(frames):
                 data[i, ...] = self.formatter.format(frame)
-            classes, raw = self.comparator.process(self.sess, np.reshape(data, [-1, self.size[0] * 2]), np.reshape(self.templates, [-1, self.size[0] * 2]))
-            raw = raw[:, classes].flatten()
-            classes = self.template_labels[classes, 0]
+            c, raw = self.comparator.process(self.sess, np.reshape(data, [-1, self.size[0] * 2]), np.reshape(self.templates, [-1, self.size[0] * 2]))
+            raw = raw[:, c].flatten()
+            classes = self.template_labels[c, 0]
+            flip_or_not = self.template_labels[c, 1]
 
         else:
             frame = frames
             data = self.formatter.format(frame)
-            classes, raw = self.comparator.process(self.sess, np.reshape(data, [-1, self.size[0] * 2]), np.reshape(self.templates, [-1, self.size[0] * 2]))
-            raw = raw[:, classes].flatten()
-            classes = self.template_labels[classes, 0]
-            print(classes.shape, raw.shape)
+            c, raw = self.comparator.process(self.sess, np.reshape(data, [-1, self.size[0] * 2]), np.reshape(self.templates, [-1, self.size[0] * 2]))
+            raw = raw[:, c].flatten()
+            classes = self.template_labels[c, 0]
+            flip_or_not = self.template_labels[c, 1]
 
-        return classes, raw
+        return classes, raw, flip_or_not
 
     def close_down(self):
         if self.running:
@@ -119,12 +120,13 @@ class Runner:
     def archive_selected(self):
         artifact_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), "artifacts")
         pack_dir = os.path.join(artifact_dir, "pack")
-        if not os.path.exists(pack_dir):
-            os.makedirs(os.path.join(artifact_dir, "pack"))
+        if os.path.exists(pack_dir):
+            shutil.rmtree(os.path.join(artifact_dir, "pack"))
+        os.makedirs(os.path.join(artifact_dir, "pack"))
         weight_path = "/".join(weight_sets[self.index]["session_name"].split("/")[:-1])
         print(weight_path)
-        shutil.make_archive(os.path.join(artifact_dir, "pack", "weights"), 'tar', os.path.join(weight_set_path, weight_path))
-        shutil.make_archive(os.path.join(artifact_dir, "pack", "templates"), 'tar', os.path.join(template_paths[self.template_index]))
+        shutil.copytree(os.path.join(weight_set_path, weight_path), os.path.join(artifact_dir, "pack", weight_path))
+        shutil.copytree(os.path.join(template_set_path, template_paths[self.template_index]), os.path.join(artifact_dir, "pack", "templates"))
         shutil.make_archive(os.path.join(artifact_dir, "pack"), 'gztar', os.path.join(artifact_dir, "pack"))
         return os.path.join(artifact_dir, "pack.tar.gz")
 
