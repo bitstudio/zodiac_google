@@ -43,10 +43,12 @@ class Sample_generator:
 
     def build_shift_graph(self, input):
 
+        valid_break_points = tf.constant([int(self.input_size[1] - 1), 0, 1], dtype=tf.int32)
+
         def shuffle_block(x):
-            break_point = tf.random_uniform((), 0, self.input_size[1], dtype=tf.int32)
-            a = tf.slice(x, [0, 0, break_point], [-1, -1, -1])
-            b = tf.slice(x, [0, 0, 0], [-1, -1, break_point])
+            break_point = valid_break_points[tf.random_uniform((), 0, tf.shape(valid_break_points)[0], dtype=tf.int32)]
+            a = x[:, :, break_point:]
+            b = x[:, :, 0:break_point]
             return tf.concat([a, b], axis=2)
 
         s = tf.shape(input)[0]
