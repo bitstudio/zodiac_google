@@ -53,6 +53,11 @@ def balance_labels(data, labels, num_classes, shuffle=False):
     return np.reshape(data[indices, ...], out_shape), np.reshape(labels[indices, ...], [out_shape[0], out_shape[1], 5])
 
 
+def unflip_data(data, labels):
+    indices = labels[:, 1] < 0
+    data[indices, ...] = np.flip(data[indices, ...], -1)
+
+
 def flip_data(data, as_diff_class=True):
     if as_diff_class:
         return np.concatenate([data, np.flip(data, -1)], axis=0)
@@ -115,6 +120,7 @@ if __name__ == '__main__':
     formatter = dataformat.DataFormat(input_size[0])
 
     data, labels = dataformat.read_data_directory(formatter, from_date, to_date, set_list)
+    unflip_data(data, labels)
     data, labels = balance_labels(data, labels, num_classes)
     data = flip_data(data, as_diff_class=True)
     print(data.shape, labels.shape)
