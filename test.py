@@ -65,7 +65,7 @@ if __name__ == '__main__':
     else:
         template_path = os.path.join("templates", "default")
 
-    templates, template_labels = dataformat.read_template_directory(formatter, template_path, with_flip=False)
+    templates, template_labels = dataformat.read_template_directory(formatter, template_path, with_flip=True)
     print("template shapes: ", templates.shape, template_labels.shape)
 
     num_intra_class = 10

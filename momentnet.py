@@ -111,8 +111,12 @@ class Comparator:
         scope = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES)
         print([x.name for x in scope])
 
+        global_step = tf.Variable(0, trainable=False)
+        starter_learning_rate = 0.0001
+        learning_rate = tf.train.exponential_decay(starter_learning_rate, global_step, 10000, 0.96, staircase=True)
+
         """ out of many algorithms, only Adam converge! A remarkable job for Kingma and Lei Ba!"""
-        self.training_op = (tf.train.AdamOptimizer(0.00001).minimize(self.overall_cost, var_list=scope), self.iter_next)
+        self.training_op = (tf.train.AdamOptimizer(learning_rate).minimize(self.overall_cost, var_list=scope), self.iter_next)
 
         self.upload_ops = tf.assign(self.data_cache, self.input_data)
         self.rebatch_ops = (self.iter_init, self.dataset_init, self.sampleset_init)
@@ -128,7 +132,7 @@ class Comparator:
         if session is None:
             config = tf.ConfigProto()
             config.gpu_options.allow_growth = True
-            # config.log_device_placement = True
+            config.log_device_placement = True
             sess = tf.Session(config=config)
         else:
             sess = session
@@ -149,12 +153,11 @@ class Comparator:
             sess.run(self.rebatch_ops)
             sum_loss = 0.0
             total_batches = int(data.shape[0] * data.shape[1] / batch_size)
-            print(total_batches)
             for i in range(total_batches * sub_epoch):
                 # pctx.trace_next_step()
                 _, loss = sess.run((self.training_op, self.overall_cost))
                 sum_loss += loss
-            print(sum_loss / (total_batches * sub_epoch))
+            print(step, " : ", sum_loss / (total_batches * sub_epoch))
             if (step + 1) % 100 == 0:
                 self.saver.save(sess, session_name)
                 print("Checkpoint ...")

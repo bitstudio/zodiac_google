@@ -43,13 +43,33 @@ class Sample_generator:
 
     def build_shift_graph(self, input):
 
-        def body(X):
+        def shuffle_block(x):
             break_point = tf.random_uniform((), 0, self.input_size[1], dtype=tf.int32)
-            a = tf.slice(X, [0, break_point], [-1, -1])
-            b = tf.slice(X, [0, 0], [-1, break_point])
-            return tf.concat([a, b], axis=1)
+            a = tf.slice(x, [0, 0, break_point], [-1, -1, -1])
+            b = tf.slice(x, [0, 0, 0], [-1, -1, break_point])
+            return tf.concat([a, b], axis=2)
 
-        out = tf.map_fn(body, input, parallel_iterations=512, back_prop=False)
+        s = tf.shape(input)[0]
+        cut = tf.cast(s / 2, tf.int32)
+
+        def shuffle_and_roll_half(x):
+            indices = tf.range(s, dtype=tf.int32)
+            shuffled_indices = tf.random_shuffle(indices)
+            reversed_indices = tf.contrib.framework.argsort(shuffled_indices)
+
+            x = tf.gather(x, shuffled_indices)
+
+            a = shuffle_block(x[0: cut, ...])
+            b = x[cut:, ...]
+
+            x = tf.concat([a, b], axis=0)
+            x = tf.gather(x, reversed_indices)
+            return x
+
+        X = input
+        for i in range(100):
+            X = shuffle_and_roll_half(X)
+        out = X
         return out
 
     def generate(self, sess, seed):

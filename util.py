@@ -169,7 +169,7 @@ def np2json(ary):
         for i in range(ary.shape[0]):
             if i > 0:
                 strary = strary + ","
-            strary = strary + str(ary[i])
+            strary = strary + str(ary[i]).lower()
     else:
         for i in range(ary.shape[0]):
             if i > 0:

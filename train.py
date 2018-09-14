@@ -22,6 +22,9 @@ parser.add_argument("--from_date", help="from date")
 parser.add_argument("--to_date", help="to date")
 parser.add_argument('-l', '--list', nargs='+', help='<Required> Set flag')
 parser.add_argument("--iter", help="training iterations", type=int)
+parser.add_argument("--layers", help="total resnet layers", type=int)
+parser.add_argument("--data_depth", help="data depth", type=int)
+parser.add_argument("--feature_depth", help="feature depth", type=int)
 parser.add_argument("--cont", type=str2bool, nargs='?', const=True, default=False, help="Continue training from the previous saved.")
 args = parser.parse_args()
 
@@ -67,13 +70,24 @@ if __name__ == '__main__':
         set_list = []
 
     # (depth, num_moments)
-    num_layers = 5
+    num_layers = 10
+    if args.layers is not None:
+        num_layers = args.layers
+
     input_size = (256, 32)
+    if args.data_depth is not None:
+        input_size[0] = args.data_depth
+
+    if args.feature_depth is not None:
+        input_size[1] = args.feature_depth
+
     if args.name is not None:
         weight_set_name = args.name
     else:
         weight_set_name = datetime.now().strftime("%Y-%m-%d")
+
     num_classes = 16
+
     iterations = 5000
     if args.iter:
         iterations = args.iter
@@ -83,7 +97,7 @@ if __name__ == '__main__':
         os.makedirs(pwd)
 
     session_name = weight_set_name + "/test"
-    print(session_name, pwd)
+    print(session_name, pwd, input_size, num_layers)
 
     with open(pwd + "/set.json", "w") as file:
         json.dump({
@@ -102,11 +116,11 @@ if __name__ == '__main__':
 
     data, labels = dataformat.read_data_directory(formatter, from_date, to_date, set_list)
     data, labels = balance_labels(data, labels, num_classes)
-    data = flip_data(data, as_diff_class=False)
+    data = flip_data(data, as_diff_class=True)
     print(data.shape, labels.shape)
 
     num_intra_class = 10
     num_inter_class = 20
     comparator = momentnet.Comparator((2, input_size[0]), input_size[1], num_intra_class=num_intra_class, num_inter_class=num_inter_class, layers=num_layers, lambdas=(5, 0.5, 5))
 
-    comparator.train(data, session_name="weight_sets/" + session_name, batch_size=min(100, labels.shape[0] * 8), max_iteration=iterations, continue_from_last=args.cont)
+    comparator.train(data, session_name="weight_sets/" + session_name, batch_size=min(100, labels.shape[0] * 2), max_iteration=iterations, continue_from_last=args.cont)

@@ -137,11 +137,13 @@ def read_template_directory(formatter, path, with_flip=False):
 
     for filename in os.listdir(template_dir):
         ts, label, _ = formatter.read_datafile(os.path.join(template_dir, filename))
+        label[1] = 1
         data.append(ts)
-        labels.append(label)
+        labels.append(label.copy())
         if with_flip:
             data.append(np.flip(ts, axis=-1))
-            labels.append(label)
+            label[1] = -1
+            labels.append(label.copy())
 
     data = np.asarray(data, dtype=np.float32)
     labels = np.asarray(labels, dtype=np.int32)
@@ -151,6 +153,7 @@ def read_template_directory(formatter, path, with_flip=False):
 if __name__ == '__main__':
     formatter = DataFormat(256)
     data, labels = read_data_directory(formatter, None, None, [])
+    # data = np.flip(data, axis=-1)
     print(data.shape, labels.shape)
 
     disp_index = random.randrange(0, data.shape[0])
