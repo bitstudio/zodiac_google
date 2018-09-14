@@ -114,6 +114,16 @@ def read_data_directory(formatter, from_date, to_date, set_list):
     labels = np.asarray(labels, dtype=np.int32)
     return data, labels
 
+def write_to_template_directory(frame, index, label, formatter, template_path):
+    pwd = os.path.dirname(os.path.abspath(__file__))
+    template_dir = os.path.join(pwd, template_path)
+    filename = build_filename(index, label, 0, 0, 100, 100)
+    print("path: ", template_dir, filename)
+    if not os.path.exists(template_dir):
+        return
+    cv2.imwrite(os.path.join(template_dir, filename), frame)
+
+
 
 def read_template_directory(formatter, path, with_flip=False):
 

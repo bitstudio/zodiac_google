@@ -1,6 +1,7 @@
 import numpy as np
 import os
 import momentnet
+import random
 import tensorflow as tf
 import json
 import dataformat
@@ -44,6 +45,7 @@ class Runner:
         self.running = False
         self.setup(0)
         self.change_template(0)
+        self.collect_template_flag = -1
 
     def change_template(self, template_index):
         if len(template_paths) < template_index:
@@ -97,8 +99,16 @@ class Runner:
             classes, raw = self.comparator.process(self.sess, np.reshape(data, [-1, self.size[0] * 2]), np.reshape(self.templates, [-1, self.size[0] * 2]))
             raw = raw[:, classes]
             classes = self.template_labels[classes, 0]
+            if self.collect_template_flag >= 0:
+            	print(self.collect_template_flag)
+            	dataformat.write_to_template_directory(frame, random.randint(0, 100000), self.collect_template_flag, self.formatter, template_paths[self.template_index])
+            	self.collect_template_flag = -1
 
         return classes, raw
+
+    def raise_template_flag(self, label):
+    	print(label)
+    	self.collect_template_flag = int(label)
 
     def close_down(self):
         if self.running:

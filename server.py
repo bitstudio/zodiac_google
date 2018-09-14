@@ -131,6 +131,15 @@ class SampleHandler(tornado.web.RequestHandler):
             dataformat.save_training_data(setname, frame, int(label), int(float(x1)), int(float(y1)), int(float(x2)), int(float(y2)))
             self.write("Done!")
 
+class TemplateHandler(tornado.web.RequestHandler):
+    def get(self):
+        print("not support")
+    def post(self):
+        label_ = self.get_body_arguments("label")
+        if len(label_) > 0:
+            label = label_[0]
+        runner.raise_template_flag(label)
+
 
 class SetHandler(tornado.web.RequestHandler):
 
@@ -194,6 +203,7 @@ def make_app():
         (r"/classify", ImageHandler),
         (r"/set", SetHandler),
         (r"/collect", SampleHandler),
+        (r"/template", TemplateHandler),
         (r'/(.*)', tornado.web.StaticFileHandler, {'path': static_path})
     ])
 
@@ -201,6 +211,6 @@ def make_app():
 if __name__ == "__main__":
     app = make_app()
     app.listen(7788)
-    # webbrowser.open("http://localhost:7788/index.html")
+    webbrowser.open("http://localhost:7788/index.html")
     tornado.ioloop.IOLoop.instance().start()
     runner.close_down()

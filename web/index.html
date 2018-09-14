@@ -17,6 +17,22 @@
     <canvas id="canvas" width="512" height="512" style="border:1px solid #000000;">
     </canvas>
     <input type="file" id="input" onchange="submit(this.files)">
+    <input type="button" id="collect_template" onclick="raise_collect_template()" value="Collect template">
+    <select name="raise collect template" id="template_label">
+    	<option value="0">0</option>
+    	<option value="1">1</option>
+    	<option value="2">2</option>
+    	<option value="3">3</option>
+    	<option value="4">4</option>
+    	<option value="5">5</option>
+    	<option value="6">6</option>
+    	<option value="7">7</option>
+    	<option value="8">8</option>
+    	<option value="9">9</option>
+    	<option value="10">10</option>
+    	<option value="11">11</option>
+    	<option value="12">12</option>
+    </select>
     <script>
     $(document).ready(function() {
 
@@ -118,6 +134,17 @@
             console.log(json);
         });
     };
+
+    window.raise_collect_template = function() {
+    	var label = $("#template_label").val()
+    	console.log(label);
+        var msg = {};
+        msg["label"] = label;
+        $.post("/template", msg, function(data) {
+            
+        });	
+    }
+
     </script>
 </body>
 
