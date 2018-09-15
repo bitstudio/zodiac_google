@@ -116,7 +116,7 @@ def read_data_directory(formatter, from_date, to_date, set_list):
 
 def write_to_template_directory(frame, index, label, formatter, template_path):
     pwd = os.path.dirname(os.path.abspath(__file__))
-    template_dir = os.path.join(pwd, template_path)
+    template_dir = os.path.join(pwd, "templates", template_path)
     filename = build_filename(index, label, 0, 0, 100, 100)
     print("path: ", template_dir, filename)
     if not os.path.exists(template_dir):
@@ -137,13 +137,23 @@ def read_template_directory(formatter, path, with_flip=False):
 
     for filename in os.listdir(template_dir):
         ts, label, _ = formatter.read_datafile(os.path.join(template_dir, filename))
-        label[1] = 1
-        data.append(ts)
-        labels.append(label.copy())
-        if with_flip:
-            data.append(np.flip(ts, axis=-1))
+        if label[1] < 0:
             label[1] = -1
+            data.append(ts)
             labels.append(label.copy())
+            if with_flip:
+                data.append(np.flip(ts, axis=-1))
+                label[1] = 1
+                labels.append(label.copy())
+
+        else:
+            label[1] = 1
+            data.append(ts)
+            labels.append(label.copy())
+            if with_flip:
+                data.append(np.flip(ts, axis=-1))
+                label[1] = -1
+                labels.append(label.copy())
 
     data = np.asarray(data, dtype=np.float32)
     labels = np.asarray(labels, dtype=np.int32)
