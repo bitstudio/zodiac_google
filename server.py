@@ -61,7 +61,7 @@ class ImageHandler(tornado.web.RequestHandler):
                 msg = ("{\"reference\":\"" + str(ref_number) + "\","
                        "\"classes\":" + util.np2json(classes) + ","
                        "\"raw\":" + util.np2json(raw) + ","
-                       "\"flip\":" + util.np2json(flip_or_not < 0) + "}"
+                       "\"flip\":[false]}"
                        )
                 self.write(msg)
 
