@@ -52,7 +52,7 @@ class Runner:
         if len(template_paths) < template_index:
             return False
         self.template_index = template_index
-        self.templates, self.template_labels = dataformat.read_template_directory(self.formatter, os.path.join(template_set_path, template_paths[self.template_index]), with_flip=False)
+        self.templates, self.template_labels = dataformat.read_template_directory(self.formatter, os.path.join(template_set_path, template_paths[self.template_index]), with_flip=True)
         print(template_paths[self.template_index])
         return True
 
@@ -110,8 +110,8 @@ class Runner:
         return classes, raw, flip_or_not
 
     def raise_template_flag(self, label):
-    	print(label)
-    	self.collect_template_flag = int(label)
+        print(label)
+        self.collect_template_flag = int(label)
 
     def close_down(self):
         if self.running:
