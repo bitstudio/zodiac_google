@@ -52,7 +52,7 @@ class Runner:
         if len(template_paths) < template_index:
             return False
         self.template_index = template_index
-        self.templates, self.template_labels = dataformat.read_template_directory(self.formatter, os.path.join(template_set_path, template_paths[self.template_index]), with_flip=True)
+        self.templates, self.template_labels = dataformat.read_template_directory(self.formatter, os.path.join(template_set_path, template_paths[self.template_index]), with_flip=False)
         print(template_paths[self.template_index])
         return True
 
