@@ -58,6 +58,8 @@ class Comparator:
         a = self.body(self.inputs, self.num_moments, self.layers)
         t = self.body(self.templates, self.num_moments, self.layers)
 
+        self.embeded = a
+
         # compute comparison graph
         self.raw_results = self.moment_compare(tf.expand_dims(a, axis=1), tf.expand_dims(t, axis=0))
         self.results = tf.argmin(self.raw_results, axis=1)
@@ -187,6 +189,10 @@ class Comparator:
     def process(self, sess, data, templates):
         results, raw_confs = sess.run((self.results, self.raw_confidence), feed_dict={self.inputs: data, self.templates: templates})
         return results, raw_confs
+
+    def embed(self, sess, data):
+        embeded = sess.run((self.embeded), feed_dict={self.inputs: data})
+        return embeded
 
 
 def sample_shift_shuffle(x, count):

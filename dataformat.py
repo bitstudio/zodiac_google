@@ -54,7 +54,7 @@ class DataFormat:
         scale = (self.size[0] / img.shape[1], self.size[1] / img.shape[0])
         label_box = parse_filename(filename, scale)
         series = self.format(img)
-        return series, label_box, filename
+        return series, label_box, filename, img
 
 
 def save_training_data(setname, frame, label, x1, y1, x2, y2):
@@ -106,13 +106,14 @@ def read_data_directory(formatter, from_date, to_date, set_list):
                 if check_inclusion(parse_date_string(datename), from_date, to_date):
                     date_dir = os.path.join(set_dir, datename)
                     for filename in os.listdir(date_dir):
-                        ts, label, _ = formatter.read_datafile(os.path.join(date_dir, filename))
+                        ts, label, _, __ = formatter.read_datafile(os.path.join(date_dir, filename))
                         data.append(ts)
                         labels.append(label)
 
     data = np.asarray(data, dtype=np.float32)
     labels = np.asarray(labels, dtype=np.int32)
     return data, labels
+
 
 def write_to_template_directory(frame, index, label, formatter, template_path):
     pwd = os.path.dirname(os.path.abspath(__file__))
@@ -124,8 +125,7 @@ def write_to_template_directory(frame, index, label, formatter, template_path):
     cv2.imwrite(os.path.join(template_dir, filename), frame)
 
 
-
-def read_template_directory(formatter, path, with_flip=False):
+def read_template_directory(formatter, path, with_flip=False, return_raw=False):
 
     data = []
     labels = []
@@ -135,29 +135,40 @@ def read_template_directory(formatter, path, with_flip=False):
     if not os.path.exists(template_dir):
         return data, labels
 
+    raws = []
     for filename in os.listdir(template_dir):
-        ts, label, _ = formatter.read_datafile(os.path.join(template_dir, filename))
+        ts, label, _, raw = formatter.read_datafile(os.path.join(template_dir, filename))
         if label[1] < 0:
             label[1] = -1
             data.append(ts)
             labels.append(label.copy())
+            if return_raw:
+                raws.append(raw)
             if with_flip:
                 data.append(np.flip(ts, axis=-1))
                 label[1] = 1
                 labels.append(label.copy())
-
+                if return_raw:
+                    raws.append(raw)
         else:
             label[1] = 1
             data.append(ts)
             labels.append(label.copy())
+            if return_raw:
+                raws.append(raw)
             if with_flip:
                 data.append(np.flip(ts, axis=-1))
                 label[1] = -1
                 labels.append(label.copy())
+                if return_raw:
+                    raws.append(raw)
 
     data = np.asarray(data, dtype=np.float32)
     labels = np.asarray(labels, dtype=np.int32)
-    return data, labels
+    if return_raw:
+        return data, labels, raws
+    else:
+        return data, labels
 
 
 if __name__ == '__main__':
