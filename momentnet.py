@@ -41,7 +41,7 @@ class Comparator:
     def moment_compare(self, f0, f1):
         return - tf.exp(-(tf.reduce_sum(tf.squared_difference(f0, f1), axis=2)))
 
-    def __init__(self, input_dimension, num_moments, num_intra_class=10, num_inter_class=20, layers=2, lambdas=(5, 0.5, 5)):
+    def __init__(self, input_dimension, num_moments, num_intra_class=10, num_inter_class=20, layers=2):
         self.num_moments = num_moments
         self.total_input_size = input_dimension[0] * input_dimension[1]
         self.layers = layers

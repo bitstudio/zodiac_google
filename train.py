@@ -127,6 +127,6 @@ if __name__ == '__main__':
 
     num_intra_class = 10
     num_inter_class = 20
-    comparator = momentnet.Comparator((2, input_size[0]), input_size[1], num_intra_class=num_intra_class, num_inter_class=num_inter_class, layers=num_layers, lambdas=(5, 0.5, 5))
+    comparator = momentnet.Comparator((2, input_size[0]), input_size[1], num_intra_class=num_intra_class, num_inter_class=num_inter_class, layers=num_layers)
 
     comparator.train(data, session_name="weight_sets/" + session_name, batch_size=min(100, labels.shape[0] * 2), max_iteration=iterations, continue_from_last=args.cont)

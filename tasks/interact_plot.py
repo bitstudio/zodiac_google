@@ -1,11 +1,9 @@
 from time import time
 
-import random
 import numpy as np
 import cv2
 import matplotlib.pyplot as plt
-from matplotlib import offsetbox
-from sklearn import (manifold, datasets, decomposition, ensemble, discriminant_analysis, random_projection)
+from sklearn import (manifold)
 
 import os
 import sys
@@ -15,25 +13,28 @@ import momentnet
 import tensorflow as tf
 
 
+template_dir = "large_template_front"
+weight_sets = "embeded_5stepRot"
+perform_embedding = True
+
 colors = np.asarray([
+    [120, 120, 120],
     [0, 0, 0],
     [0, 0, 255],
     [255, 0, 0],
     [0, 255, 0],
-    [100, 0, 0],
-    [0, 100, 0],
-    [0, 0, 100],
+    [120, 0, 0],
+    [0, 120, 0],
+    [0, 0, 120],
     [255, 255, 0],
     [0, 255, 255],
     [255, 0, 255],
-    [100, 100, 0],
-    [0, 100, 100],
-    [100, 0, 100],
-    [100, 255, 0],
-    [255, 100, 0]
+    [120, 120, 0],
+    [0, 120, 120],
+    [120, 0, 120],
+    [255, 120, 255]
 ], dtype=np.float)
 
-template_dir = "neo_puppet"
 formatter = dataformat.DataFormat(256)
 templates, template_labels, raws = dataformat.read_template_directory(formatter, os.path.join("templates", template_dir), with_flip=True, return_raw=True)
 print(templates.shape)
@@ -41,11 +42,10 @@ X = np.reshape(templates, [templates.shape[0], -1])
 Y = colors[template_labels[:, 0]] / 255.0
 X_plotted = None
 
-perform_embedding = True
 if perform_embedding:
-    comparator = momentnet.Comparator((2, 256), 32, num_intra_class=10, num_inter_class=20, layers=5, lambdas=(5, 0.5, 5))
+    comparator = momentnet.Comparator((2, 256), 32, num_intra_class=10, num_inter_class=20, layers=5)
 
-    session_name = os.path.join(os.path.dirname(__file__), '..', "weight_sets", "hongkong_puppet_only_5stepsRotate", "test")
+    session_name = os.path.join(os.path.dirname(__file__), '..', "weight_sets", weight_sets, "test")
     sess = tf.Session()
     sess.run(tf.global_variables_initializer())
     comparator.load_session(sess, session_name)
