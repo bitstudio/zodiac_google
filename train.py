@@ -32,18 +32,19 @@ args = parser.parse_args()
 def balance_labels(data, labels, num_classes, shuffle=False):
 
     all_list = []
-    min_num_class = labels.shape[0]
+    max_num_class = 0
     for i in range(num_classes):
         temp = np.argwhere(labels[:, 0] == i).flatten()
         if temp.shape[0] > 0:
             all_list.append(temp)
-            if min_num_class > temp.shape[0]:
-                min_num_class = temp.shape[0]
+            if max_num_class < temp.shape[0]:
+                max_num_class = temp.shape[0]
 
-    selected_list = np.empty((len(all_list), min_num_class), dtype=np.int32)
+    selected_list = np.empty((len(all_list), max_num_class), dtype=np.int32)
+    r = np.arange(max_num_class)
     for i in range(len(all_list)):
         np.random.shuffle(all_list[i])
-        selected_list[i, :] = all_list[i][0: min_num_class]
+        selected_list[i, :] = all_list[i][np.mod(r, all_list[i].shape[0])]
 
     indices = selected_list.flatten()
     if shuffle:
