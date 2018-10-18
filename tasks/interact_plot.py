@@ -7,14 +7,14 @@ from sklearn import (manifold)
 
 import os
 import sys
+import tensorflow as tf
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 import dataformat
 import momentnet
-import tensorflow as tf
 
 
 template_dir = "large_template_front"
-weight_sets = "embeded_5stepRot"
+weight_sets = "large_embeded_5stepRot"
 perform_embedding = True
 
 colors = np.asarray([
@@ -52,6 +52,7 @@ if perform_embedding:
     X = comparator.embed(sess, X)
     sess.close()
 
+
 #----------------------------------------------------------------------
 # Scale and visualize the embedding vectors
 
@@ -83,7 +84,7 @@ def hover(event):
 
 
 if __name__ == '__main__':
-    tsne = manifold.TSNE(n_components=2, init='pca')
+    tsne = manifold.TSNE(n_components=2, init='random')
 
     key = None
 
