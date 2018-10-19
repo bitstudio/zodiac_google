@@ -71,7 +71,7 @@ A shadowplay system that we can change class examples on the fly. Want to add or
 
 ### Visualize the feature space
 
-If we want to see what's going on in the top most level of our network, the most convenient way is to project the result feature space onto a 2D plane ( where each of the color dots represents a shadow data point.)
+If we want to see what's going on in the top most level of our network, the most convenient way is to project the result feature space onto a 2D plane (via [t-SNE](https://lvdmaaten.github.io/tsne/)) ( where each of the color dots represents a shadow data point.)
 
 ![enter image description here](https://github.com/PVirie/zodiac/raw/master/artifacts/COMP.png)
 
