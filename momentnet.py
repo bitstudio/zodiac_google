@@ -195,18 +195,7 @@ class Comparator:
         return embeded
 
 
-def sample_shift_shuffle(x, count):
-    temp = []
-    for i in range(count):
-        index = random.randrange(0, x.shape[0])
-        temp.append(np.roll(x[index, :], random.randint(0, x.shape[1])))
-
-    return np.stack(temp, axis=0)
-
-
 if __name__ == "__main__":
-    data = np.asarray([[1, 2, 3, 4, 5], [6, 7, 8, 9, 0]])
-    print(sample_shift_shuffle(data, 4))
 
     data = np.random.rand(5, 1, 2, 20) * 2 - 0.5
     templates = np.roll(data, 5, axis=3)

@@ -69,7 +69,16 @@ TPU offers an increasing speed for training. But we can no longer perform intern
 
 A shadowplay system that we can change class examples on the fly. Want to add or change label? Simply update the example and that's it. The system can't recognize a hand gesture correctly? Simply take a snapshot of that gesture and add it to the examples to refine the results.
 
-A more detailed performance results will be available after.
+### Visualize the feature space
+
+If we want to see what's going on in the top most level of our network, the most convenient way is to project the result feature space onto a 2D plane ( where each of the color dots represents a shadow data point.)
+![enter image description here](https://bit-shadowplay.com/gen.png)
+
+When we compare it to the similar projections from using just the raw data and from using [variational autoencoder](https://en.wikipedia.org/wiki/Autoencoder#Variational_autoencoder_(VAE)) as the encoding network.
+![enter image description here](https://bit-shadowplay.com/gen.png)
+![enter image description here](https://bit-shadowplay.com/gen.png)
+
+Clearly, we can see a benefit of using our model for data clustering because that's what it has been designed to do from start.
 
 ## Installation
 

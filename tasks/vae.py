@@ -74,15 +74,15 @@ class VAE:
         y = self.decode(z, self.total_input_size, self.layers)
 
         # loss
-        marginal_likelihood = tf.reduce_sum(tf.exp(-tf.squared_difference(self.inputs, y)), 1)
-        KL_divergence = 0.5 * tf.reduce_sum(tf.square(self.embeded) + tf.square(sigmas) - tf.log(1e-10 + tf.square(sigmas)) - 1, 1)
+        marginal_likelihood = tf.reduce_mean(tf.exp(-tf.squared_difference(self.inputs, y)), 1)
+        KL_divergence = 0.5 * tf.reduce_mean(tf.square(self.embeded) + tf.square(sigmas) - tf.log(1e-10 + tf.square(sigmas)) - 1, 1)
 
         marginal_likelihood = tf.reduce_mean(marginal_likelihood)
         KL_divergence = tf.reduce_mean(KL_divergence)
 
         ELBO = marginal_likelihood - KL_divergence
 
-        self.overall_cost = -ELBO
+        self.overall_cost = 1.0 - ELBO
 
         scope = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES)
         print([(x.name, x.dtype) for x in scope])
@@ -96,7 +96,7 @@ class VAE:
 
         global_step = tf.Variable(0, trainable=False)
         starter_learning_rate = 0.0001
-        learning_rate = tf.train.exponential_decay(starter_learning_rate, global_step, 10000, 0.96, staircase=True)
+        learning_rate = tf.train.exponential_decay(starter_learning_rate, global_step, 10000, 0.99, staircase=True)
 
         """ out of many algorithms, only Adam converge! A remarkable job for Kingma and Lei Ba!"""
         self.training_op = tf.train.AdamOptimizer(learning_rate).minimize(self.overall_cost, var_list=scope)
@@ -211,4 +211,4 @@ if __name__ == "__main__":
     print(data.shape, labels.shape)
 
     net = VAE((2, input_size[0]), input_size[1], layers=num_layers)
-    net.train(data, session_name="weight_sets/" + session_name, batch_size=min(100, labels.shape[0] * 2), max_iteration=iterations, continue_from_last=False)
+    net.train(data, session_name="../weight_sets/" + session_name, batch_size=min(100, labels.shape[0] * 2), max_iteration=iterations, continue_from_last=False)

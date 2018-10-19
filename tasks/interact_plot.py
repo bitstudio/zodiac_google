@@ -8,6 +8,7 @@ from sklearn import (manifold)
 import os
 import sys
 import tensorflow as tf
+import vae
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 import dataformat
 import momentnet
@@ -44,6 +45,7 @@ X_plotted = None
 
 if perform_embedding:
     comparator = momentnet.Comparator((2, 256), 32, num_intra_class=10, num_inter_class=20, layers=5)
+    # comparator = vae.VAE((2, 256), 32, layers=5)
 
     session_name = os.path.join(os.path.dirname(__file__), '..', "weight_sets", weight_sets, "test")
     sess = tf.Session()
