@@ -72,10 +72,13 @@ A shadowplay system that we can change class examples on the fly. Want to add or
 ### Visualize the feature space
 
 If we want to see what's going on in the top most level of our network, the most convenient way is to project the result feature space onto a 2D plane ( where each of the color dots represents a shadow data point.)
+
 ![enter image description here](https://github.com/PVirie/zodiac/raw/master/artifacts/COMP.png)
 
 When we compare it to the similar projections from using just the raw data and from using [variational autoencoder](https://en.wikipedia.org/wiki/Autoencoder#Variational_autoencoder_(VAE)) as the encoding network.
+
 ![enter image description here](https://github.com/PVirie/zodiac/raw/master/artifacts/RAW.png)
+
 ![enter image description here](https://github.com/PVirie/zodiac/raw/master/artifacts/VAE.png)
 
 Clearly, we can see a benefit of using our model for data clustering because that's what it has been designed to do from start.
