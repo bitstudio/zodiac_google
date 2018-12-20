@@ -44,6 +44,9 @@
 
     let zodiac = true;
 
+    let video = null;
+    let package = null;
+
     let height = 0;
     let width = 0;
     const FPS = 30;
@@ -80,10 +83,6 @@
     let mode_steps = 0
     let background_update_alpha = 0.05
 
-    let video = null;
-    let package = null;
-
-
     // tracking
     let tx = -1;
     let ty = -1;
@@ -92,6 +91,19 @@
     let countdown = 2000;
     let stamp = new Date().getTime();
     let allow_capture = true;
+    let allow_pre_capture = false;
+    let first = true;
+
+
+    function reset_state() {
+        mode = 0;
+        mode_steps = 0;
+        tx = -1;
+        ty = -1;
+        allow_pre_capture = false;
+        background.setTo(new cv.Scalar(0, 0, 0, 255));
+        first = true;
+    }
 
     function in_criterior(x, y) {
         return (x - tx) * (x - tx) + (y - ty) * (y - ty) < epsilon;
@@ -115,7 +127,7 @@
 
         videoElement = $('<video id="videoInput" width="' + width + '" height="' + height + '"></video>');
         $('body').append(videoElement);
-        // videoElement.hide();
+        videoElement.hide();
 
         canvasElement = $('<canvas id="canvasFrame" width="' + width + '" height="' + height + '"></canvas>');
         $('body').append(canvasElement);
@@ -154,17 +166,20 @@
                 [raw_to_capture_to_disp_ratio, 0, -(capture_x - capture_res*0.5)*raw_to_capture_to_disp_ratio, 0, raw_to_capture_to_disp_ratio, -(capture_y - capture_res*0.5)*raw_to_capture_to_disp_ratio]);
 
         src = new cv.Mat(height, width, cv.CV_8UC4);
-        src_float = new cv.Mat(height, width, cv.CV_32FC4);
-        background = new cv.Mat(height, width, cv.CV_8UC4, new cv.Scalar(0, 0, 0, 255));
-        diff = new cv.Mat(height, width, cv.CV_8UC4);
-        dst = new cv.Mat(height, width, cv.CV_8UC1);
-        floatmap1 = new cv.Mat(height, width, cv.CV_32FC1);
-        ones = new cv.Mat(height, width, cv.CV_8UC1, new cv.Scalar(255, 255, 255, 255));
-        zeros = new cv.Mat(height, width, cv.CV_8UC1, new cv.Scalar(0, 0, 0, 255));
-        disp = new cv.Mat(height, width, cv.CV_8UC4, new cv.Scalar(255, 255, 255, 255));
-        disp_warpped = new cv.Mat(disp_height, disp_width, cv.CV_8UC4, new cv.Scalar(255, 255, 255, 255));
-        preview_image = new cv.Mat(disp_height, disp_height, cv.CV_8UC4);
+        src_cap = new cv.Mat(capture_res, capture_res, cv.CV_8UC4, new cv.Scalar(255, 255, 255, 255));
+        src_disp = new cv.Mat(disp_height, disp_width, cv.CV_8UC4, new cv.Scalar(255, 255, 255, 255));
+
+        background = new cv.Mat(capture_res, capture_res, cv.CV_8UC4, new cv.Scalar(0, 0, 0, 255));
+        diff = new cv.Mat(capture_res, capture_res, cv.CV_8UC4);
+        dst = new cv.Mat(capture_res, capture_res, cv.CV_8UC1);
+        ones = new cv.Mat(capture_res, capture_res, cv.CV_8UC1, new cv.Scalar(255, 255, 255, 255));
+        zeros = new cv.Mat(capture_res, capture_res, cv.CV_8UC1, new cv.Scalar(0, 0, 0, 255));
         data_image = new cv.Mat(capture_res, capture_res, cv.CV_8UC4);
+
+        disp = new cv.Mat(disp_height, disp_height, cv.CV_8UC4, new cv.Scalar(255, 255, 255, 255));
+        preview_image = new cv.Mat(disp_height, disp_height, cv.CV_8UC4);
+
+        reset_state();
 
         video = document.getElementById("videoInput"); // video is the id of video tag
         video.srcObject = stream;
@@ -172,7 +187,7 @@
     }
 
     function collectBackground() {
-        cv.addWeighted(background, 1.0 - background_update_alpha, src, background_update_alpha, 0, background);
+        cv.addWeighted(background, 1.0 - background_update_alpha, src_cap, background_update_alpha, 0, background);
     }
 
 
@@ -181,12 +196,13 @@
         context.drawImage(video, 0, 0, width, height);
         src.data.set(context.getImageData(0, 0, width, height).data);
         cv.flip(src, src, 1);
+        cv.warpAffine(src, src_cap, M_raw_to_capture, new cv.Size(capture_res, capture_res));
 
         if (mode == 0) {
 
             collectBackground();
 
-            cv.absdiff(src, background, diff);
+            cv.absdiff(src_cap, background, diff);
             cv.cvtColor(diff, dst, cv.COLOR_RGBA2GRAY);
 
             kernel = new cv.Size(21, 21);
@@ -195,13 +211,48 @@
             xy = maxTuple.maxLoc;
             max_value = maxTuple.maxVal;
 
-            if(max_value < 30 && mode_steps > 20) {
+            console.log(max_value);
+
+            if(max_value < 20 && mode_steps > 100) {
                 mode = 1;
                 mode_steps = 0;
             }
+            mode_steps = mode_steps + 1;
 
-            cv.warpAffine(src, disp_warpped, M_raw_to_disp, new cv.Size(disp_width, disp_height));
-            cv.imshow("canvasOutput", disp_warpped);
+            cv.warpAffine(src, src_disp, M_raw_to_disp, new cv.Size(disp_width, disp_width));
+            cv.imshow("canvasOutput", src_disp);
+
+        }else if(mode == 1) {
+
+            collectBackground();
+
+            cv.absdiff(src_cap, background, diff);
+            cv.cvtColor(diff, dst, cv.COLOR_RGBA2GRAY);
+
+            kernel = new cv.Size(21, 21);
+            cv.blur(dst, dst, kernel);
+            maxTuple = cv.minMaxLoc(dst); 
+            xy = maxTuple.maxLoc;
+            max_value = maxTuple.maxVal;
+
+            if(max_value > 50) {
+                allow_pre_capture = true;
+                mode_steps = 0;
+            }
+
+            if(allow_pre_capture) {
+                mode_steps = mode_steps + 1;
+            }
+
+            if (mode_steps > 50 && max_value < 20) {
+                mode = 2;
+                mode_steps = 0;
+                allow_capture = false;
+            }
+
+
+            cv.warpAffine(src, src_disp, M_raw_to_disp, new cv.Size(disp_width, disp_width));
+            cv.imshow("canvasOutput", src_disp);
 
             var dwcr = disp_width / (width - raw_offset_x*2);
             var dhcr = disp_height / (height - raw_offset_y*2);
@@ -210,11 +261,11 @@
                 (capture_y - capture_res*0.5 - raw_offset_y) * dhcr, capture_res * dwcr, capture_res * dhcr);
             rawContext.stroke();
 
-            mode_steps = mode_steps + 1;
 
-        }else if(mode == 1) {
+        }else if(mode == 2) {
 
-            cv.absdiff(src, background, diff);
+
+            cv.absdiff(src_cap, background, diff);
             cv.cvtColor(diff, dst, cv.COLOR_RGBA2GRAY);
 
             kernel = new cv.Size(5, 5)
@@ -237,9 +288,9 @@
                 temp.delete();
             }
 
-            disp.setTo(new cv.Scalar(0, 0, 0, 255));
+            data_image.setTo(new cv.Scalar(0, 0, 0, 255));
             let color = new cv.Scalar(255, 255, 255, 255);
-            cv.drawContours(disp, contours, max_i, color, cv.FILLED, cv.LINE_8, hierarchy, 1);
+            cv.drawContours(data_image, contours, max_i, color, cv.FILLED, cv.LINE_8, hierarchy, 1);
 
             let cnt = contours.get(max_i);
             let Moments = cv.moments(cnt, false);
@@ -262,8 +313,8 @@
             contours.delete();
             hierarchy.delete();
 
-            cv.warpAffine(disp, disp_warpped, M_raw_to_capture_to_disp, new cv.Size(disp_width, disp_height));
-            cv.imshow("canvasOutput", disp_warpped); // canvasOutput is the id of another <canvas>;
+            cv.resize(data_image, disp, new cv.Size(disp_width, disp_width));
+            cv.imshow("canvasOutput", disp); // canvasOutput is the id of another <canvas>;
             // cv.imshow("canvasOutput", dst); // canvasOutput is the id of another <canvas>;
 
         }
@@ -278,7 +329,6 @@
     function capture() {
         if (!allow_capture) return;
         allow_capture = false;
-        cv.warpAffine(disp, data_image, M_raw_to_capture, new cv.Size(capture_res, capture_res));
         
         cv.imshow("dataFrame", data_image);
         package = {
@@ -306,6 +356,8 @@
                 previewContext.font="18px Arial";
                 previewContext.fillText(json["classes"][j].toString(), 50, 50 + 20*j);
             }
+
+            reset_state();
 
         });
     }
