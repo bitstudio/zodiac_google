@@ -133,9 +133,11 @@ class SampleHandler(tornado.web.RequestHandler):
             dataformat.save_training_data(setname, frame, int(label), int(float(x1)), int(float(y1)), int(float(x2)), int(float(y2)))
             self.write("Done!")
 
+
 class TemplateHandler(tornado.web.RequestHandler):
     def get(self):
         print("not support")
+
     def post(self):
         label_ = self.get_body_arguments("label")
         if len(label_) > 0:
@@ -222,7 +224,11 @@ def make_app():
 
 if __name__ == "__main__":
     app = make_app()
-    app.listen(7788)
+    http_server = tornado.httpserver.HTTPServer(app, ssl_options={
+        "certfile": os.path.join(os.path.dirname(__file__), "artifacts", "domain.crt"),
+        "keyfile": os.path.join(os.path.dirname(__file__), "artifacts", "domain.key")
+    })
+    http_server.listen(7788)
     webbrowser.open("http://localhost:7788/index.html")
     tornado.ioloop.IOLoop.instance().start()
     runner.close_down()
