@@ -340,12 +340,12 @@ function init_preprocessing(input_width, display_container, sample_container, on
     	this.class = null;
     	this.raw_contours = contours;
 
-        let Moments = cv.moments(contours, false);
-        this.cx = Moments.m10 / Moments.m00;
-        this.cy = Moments.m01 / Moments.m00;
+  //       let Moments = cv.moments(contours, false);
+  //       this.cx = Moments.m10 / Moments.m00;
+  //       this.cy = Moments.m01 / Moments.m00;
 
-        let rotatedRect = cv.fitEllipse(contours);
-		this.angle = rotatedRect.angle;
+  //       let rotatedRect = cv.fitEllipse(contours);
+		// this.angle = rotatedRect.angle*Math.PI/180;
 
     	this.set_radius = function(radius, x1, y1, x2, y2) {
 
@@ -361,6 +361,8 @@ function init_preprocessing(input_width, display_container, sample_container, on
 
 	        this.nps = [];
 	        total = this.raw_contours.rows;
+	        var sumx = 0;
+	        var sumy = 0;
 	        for(var i = 0;i<total;++i){
 	        	var temp = this.raw_contours.row(i).data32S;
 	        	var x = (temp[0]*1.0 / capture_res - 0.5) * this.w;
@@ -370,8 +372,15 @@ function init_preprocessing(input_width, display_container, sample_container, on
 	        	var t = Math.atan2(y, x);
 
 	            this.nps.push([x + this.sx, y + this.sy, r, t]);
+
+	            sumx += x;
+	            sumy += y;
 	        }
 
+	        var angle = Math.atan2(sumy, sumx);
+
+	        this.px = this.sx + radius*Math.cos(angle);
+	        this.py = this.sy + radius*Math.sin(angle);
 
 	        this.tx = (this.sy - this.py) / radius;
 	        this.ty = (this.px - this.sx) / radius;
@@ -388,8 +397,8 @@ function init_preprocessing(input_width, display_container, sample_container, on
 	        	var y = temp[1];
 
 	        	var d = (x - this.px)*this.tx + (y - this.py)*this.ty;
-	        	var prx = this.px + this.tx*d;
-				var pry = this.py + this.ty*d;
+	        	var prx = this.px + this.tx*d*0.2;
+				var pry = this.py + this.ty*d*0.2;
 
 				out.push([(x - prx)*t + prx, (y - pry)*t + pry]);
 	        }
