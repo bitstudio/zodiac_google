@@ -1,7 +1,7 @@
 
 function init_shadow() {
 
-	function load_weight(path, shape) {
+	function load_weight(path, shape, is_integer) {
     	var deferred = new $.Deferred();
 		var oReq = new XMLHttpRequest();
 		oReq.open("GET", path, true);
@@ -10,8 +10,13 @@ function init_shadow() {
 		oReq.onload = function (oEvent) {
 		  var arrayBuffer = oReq.response; // Note: not oReq.responseText
 		  if (arrayBuffer) {
-		    var weights = new Float32Array(arrayBuffer);
-		    deferred.resolve({"d": weights, "t": "w", "s": shape});
+		  	if(is_integer) {
+			    var weights = new Int32Array(arrayBuffer);
+			    deferred.resolve({"d": weights, "t": "i", "s": shape});
+		  	}else{
+			    var weights = new Float32Array(arrayBuffer);
+			    deferred.resolve({"d": weights, "t": "f", "s": shape});
+		  	}
 		  }else{
 		  	deferred.reject();
 		  }
@@ -33,10 +38,10 @@ function init_shadow() {
 		        var children = [];
 		        for(i in weight_set) {
 		        	weight = weight_set[i];
-		        	if(weight["t"] == "w") {
-		        		children.push(load_weight(weight["path"], weight["shape"]));
-		        	}else{
+		        	if(weight["t"] == "n") {
 		        		children.push(load_descriptor(weight["path"]));
+		        	}else{
+		        		children.push(load_weight(weight["path"], weight["shape"], weight["t"] == "i"));
 		        	}
 		        }
 
@@ -58,7 +63,7 @@ function init_shadow() {
 	}	
 
 
-	load_descriptor("model/_model.json").then(on_ready);
+	load_descriptor("model/model.json").then(on_ready);
 
 	    // const v = tf.tensor2d([[1, 2], [3, 4]]);
 	    // const b = tf.tensor1d([1, 2]);
@@ -96,7 +101,7 @@ function init_shadow() {
 			    m = tf.mean(r, axis=1, keepDims=true);
 			    r = tf.div(r, m);
 			    out = tf.concat([r, tf.mul(t, r)], 0)
-				return out;
+				return tf.reshape(out, [-1, size*2]);
 			});
 		}
 
@@ -129,7 +134,7 @@ function init_shadow() {
 			});
 		}
 
-		function get_class(response) {
+		function get_match(response) {
 			return tf.tidy(() => {
 				return tf.argMax(response, 1);
 			});
@@ -177,26 +182,26 @@ function init_shadow() {
 		    return [r, t];
 		}
 
-		//const d0 = compute(tf.tensor2d([[0.09, 0.1], [0.1, 0.1], [0.1, 0.11]]));
-		const d0 = compute(tf.tensor2d(weights[6]["d"], weights[6]["s"]));
+		const templates = tf.tensor2d(weights[6]["d"], weights[6]["s"]);
+		const class_lut = weights[7]["d"];
 				
-
 		window.classify_contour = function(contour_obj, on_inferred_callback) {
 		  
-		  	var eqi_length = contour_obj.re_contour(2);
+		  	var eqi_length = contour_obj.re_contour(256);
 	  		r_t = get_polar_stat(eqi_length);
 
 	  		const input = normalize(r_t[0], r_t[1]);
 			const r0 = compute(input);
-			const raw = compare(r0, d0);
-			const classes = get_class(raw);
+			const raw = compare(r0, templates);
+			const match_indices = get_match(raw);
 			raw.data().then(function(raw_cpu){
-				classes.data().then(function(classes_cpu){
-		    		on_inferred_callback(contour_obj.id, classes_cpu[0], raw_cpu[0][classes_cpu[0]]);
+				match_indices.data().then(function(match_indices_cpu){
+					output_class = class_lut[match_indices_cpu[0]]
+		    		on_inferred_callback(contour_obj.id, output_class, raw_cpu[0][output_class]);
 		    		input.dispose();
 		    		r0.dispose();
 		    		raw.dispose();
-		    		classes.dispose();
+		    		match_indices.dispose();
 				})
 			});
 		};

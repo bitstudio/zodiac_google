@@ -199,6 +199,8 @@ class SetHandler(tornado.web.RequestHandler):
             except tornado.web.MissingArgumentError:
                 message = 'No template'
 
+        runner.save_weight_for_web_download()
+
         self.write("{\"result\":" + ("true" if result else "false") + "}")
 
 

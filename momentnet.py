@@ -38,6 +38,24 @@ class Comparator:
         self.first_time = False
         return output
 
+    def get_weights(self, sess, templates):
+
+        with tf.variable_scope("moment", reuse=True):
+            v = tf.get_variable("v")
+            b = tf.get_variable("b")
+
+            W = []
+            U = []
+            Ub = []
+            Wb = []
+            for i in range(self.layers):
+                W.append(tf.get_variable(str(i) + "w"))
+                U.append(tf.get_variable(str(i) + "u"))
+                Ub.append(tf.get_variable(str(i) + "ub"))
+                Wb.append(tf.get_variable(str(i) + "wb"))
+
+        return sess.run([v, b, W, U, Wb, Ub, self.compare_dict], feed_dict={self.templates: templates})
+
     def moment_compare(self, f0, f1):
         return - tf.exp(-(tf.reduce_sum(tf.squared_difference(f0, f1), axis=2)))
 
@@ -57,6 +75,7 @@ class Comparator:
 
         a = self.body(self.inputs, self.num_moments, self.layers)
         t = self.body(self.templates, self.num_moments, self.layers)
+        self.compare_dict = t
 
         self.embeded = a
 

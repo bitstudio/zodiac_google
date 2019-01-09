@@ -6,6 +6,8 @@ import tensorflow as tf
 import json
 import dataformat
 import shutil
+import json
+from array import array
 
 weight_set_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "weight_sets")
 weight_sets = []
@@ -139,6 +141,50 @@ class Runner:
         shutil.copytree(os.path.join(template_set_path, template_paths[self.template_index]), os.path.join(artifact_dir, "pack", "templates"))
         shutil.make_archive(os.path.join(artifact_dir, "pack"), 'gztar', os.path.join(artifact_dir, "pack"))
         return os.path.join(artifact_dir, "pack.tar.gz")
+
+    def save_weight_for_web_download(self):
+        if not self.running:
+            return None
+
+        weights = self.comparator.get_weights(self.sess, np.reshape(self.templates, [-1, self.size[0] * 2]))
+        weights.append(self.template_labels[:, 0])
+
+        web_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), "web")
+        model_dir = os.path.join(web_dir, "model")
+        if os.path.exists(model_dir):
+            shutil.rmtree(model_dir)
+        os.makedirs(model_dir)
+
+        write_model_weight(web_dir, weights, "model/model")
+
+
+def write_model_weight(root, weights, name):
+    outfile_name = name + ".json"
+    with open(os.path.join(root, outfile_name), 'w') as outfile:
+
+        data = []
+        for i, w in enumerate(weights):
+            if isinstance(w, list):
+                child_file_name = write_model_weight(root, w, name + "_" + str(i))
+                data.append({"t": "n",
+                             "path": child_file_name})
+            else:
+                child_file_name = name + "_" + str(i) + ".bin"
+                with open(os.path.join(root, child_file_name), 'wb') as child_output:
+                    if w.dtype == np.int32:
+                        array('i', w.astype(np.int32).flatten().tolist()).tofile(child_output)
+                        data.append({"t": "i",
+                                     "shape": w.shape,
+                                     "path": child_file_name})
+                    else:
+                        array('f', w.astype(np.float32).flatten().tolist()).tofile(child_output)
+                        data.append({"t": "f",
+                                     "shape": w.shape,
+                                     "path": child_file_name})
+
+        print("writing to ", outfile_name)
+        json.dump(data, outfile)
+    return outfile_name
 
 
 if __name__ == '__main__':
