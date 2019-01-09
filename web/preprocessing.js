@@ -290,48 +290,47 @@ function init_preprocessing(input_width, display_container, sample_container, on
         if (!allow_capture) return;
         allow_capture = false;
 
-        contour_obj = new Contour_Object(contours);
+        var contour_obj = new Contour_Object(contours);
         contour_object_list[contour_obj.id] = contour_obj;
 
         cv.imshow("dataFrame", data_image);
-        package = {
-            reference: contour_obj.id,
-            setname: (getParameterByName("setname") || "test") + (zodiac? "_zodiac": "_puppet"),
-            image: dataFrame.toDataURL()
-        };
-
-        classify();
-    }
-
-    function classify() {
 
         cv.resize(data_image, preview_image, new cv.Size(disp_width, disp_height));
         cv.imshow("previewFrame", preview_image);
 
-        $.post("/classify", package, function(data, status, xhr) {
-            console.log(data);
-            var json = JSON.parse(data);
+        if(window.classify_contour != null) {
+            window.classify_contour(contour_obj, on_inferred);
+        }else{
+            package = {
+                reference: contour_obj.id,
+                image: dataFrame.toDataURL()
+            };
 
-            id = json.reference;
-            contour_obj = contour_object_list[id];
-            contour_obj["class"] = json["classes"][0];
-            contour_obj["score"] = json["raw"][0];
-
-            for (var j = 0; j < json["classes"].length; ++j) {
-                previewContext.fillStyle="#FFFFFF";
-                previewContext.fillRect(40,35 + 20*j,40,20);
-                previewContext.fillStyle="#000000";
-                previewContext.font="18px Arial";
-                previewContext.fillText(json["classes"][j].toString(), 50, 50 + 20*j);
-            }
-
-            reset_state();
-            if(on_capture_callback != null) {
-            	on_capture_callback(contour_obj);
-            }
-        	delete contour_object_list[id];
-        });
+            $.post("/classify", package, function(data, status, xhr) {
+                console.log(data);
+                var json = JSON.parse(data);
+                on_inferred(json.reference, json["classes"][0], json["raw"][0]);
+            });
+        }
     }
+
+    function on_inferred(id, classes, raws){
+        var contour_obj = contour_object_list[id];
+        contour_obj["class"] = classes;
+        contour_obj["score"] = raws;
+
+        previewContext.fillStyle="#FFFFFF";
+        previewContext.fillRect(40,35,40,20);
+        previewContext.fillStyle="#000000";
+        previewContext.font="18px Arial";
+        previewContext.fillText(classes.toString(), 50, 50);
+
+        reset_state();
+        if(on_capture_callback != null) {
+            on_capture_callback(contour_obj);
+        }
+        delete contour_object_list[id];
+    };
 
 
     function Contour_Object(contours) {
@@ -339,13 +338,46 @@ function init_preprocessing(input_width, display_container, sample_container, on
     	this.score = null;
     	this.class = null;
     	this.raw_contours = contours;
+        
 
-  //       let Moments = cv.moments(contours, false);
-  //       this.cx = Moments.m10 / Moments.m00;
-  //       this.cy = Moments.m01 / Moments.m00;
+        function point_dist(p0, p1) {
+            return Math.sqrt((p0[0] - p1[0])*(p0[0] - p1[0]) + (p0[1] - p1[1])*(p0[1] - p1[1]));
+        }
 
-  //       let rotatedRect = cv.fitEllipse(contours);
-		// this.angle = rotatedRect.angle*Math.PI/180;
+        function interpolate_point(p0, p1, alpha) {
+            return [p0[0] * (1 - alpha) + p1[0] * (alpha), p0[1] * (1 - alpha) + p1[1] * (alpha)];
+        }
+
+        this.re_contour = function(size) {
+
+            var len_contour = this.raw_contours.rows;
+            c_p = this.raw_contours.row(0).data32S;
+            contour_portions = [0.0];
+            for(var i = 1; i<len_contour; ++i) {
+                n_p = this.raw_contours.row(i).data32S;
+                dist = point_dist(n_p, c_p);
+                contour_portions.push(dist + contour_portions[i - 1]);
+                c_p = n_p;
+            }
+            n_p = this.raw_contours.row(0).data32S;
+            dist = point_dist(n_p, c_p);
+            total_length = dist + contour_portions[len_contour - 1];
+            contour_portions.push(total_length);
+
+            out_contour = [];
+            index = 1
+            for(var i = 0;i<size;++i) {
+                cs = total_length * i * 0.999 / (size - 1);
+                while(contour_portions[index] < cs) {
+                    index = index + 1;
+                }
+                alpha = (cs - contour_portions[index - 1]) / (contour_portions[index] - contour_portions[index - 1]);
+                new_point = interpolate_point(this.raw_contours.row(index-1).data32S, this.raw_contours.row(index % len_contour).data32S, alpha);
+                out_contour.push(new_point);
+            }
+
+            return out_contour;
+        }
 
     	this.set_radius = function(radius, x1, y1, x2, y2) {
 
