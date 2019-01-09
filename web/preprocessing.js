@@ -174,6 +174,7 @@ function init_preprocessing(input_width, display_container, sample_container, on
             if(max_value < 20 && mode_steps > 50) {
                 mode = 1;
                 mode_steps = 0;
+                allow_capture = false;
             }
             mode_steps = mode_steps + 1;
 
