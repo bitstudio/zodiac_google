@@ -1,4 +1,4 @@
-function init_preprocessing(input_width, display_container, sample_container, on_capture_callback) {
+function init_preprocessing(input_width, display_container, sample_container, on_capture_callback, on_shadow_callback) {
   
 	let zodiac = true;
 
@@ -257,6 +257,9 @@ function init_preprocessing(input_width, display_container, sample_container, on
             let cx = Moments.m10 / Moments.m00;
             let cy = Moments.m01 / Moments.m00;
 
+            if(on_shadow_callback != null)
+                on_shadow_callback(new Contour_Object(cnt));
+
             // console.log(cx, tx, cy, ty);
             if (in_criterior(cx, cy)) {
                 if (new Date().getTime() - stamp > countdown) {
@@ -324,7 +327,7 @@ function init_preprocessing(input_width, display_container, sample_container, on
         previewContext.fillRect(40,35,40,20);
         previewContext.fillStyle="#000000";
         previewContext.font="18px Arial";
-        previewContext.fillText(classes.toString(), 50, 50);
+        previewContext.fillText(classes[0].toString(), 50, 50);
 
         reset_state();
         if(on_capture_callback != null) {
@@ -380,64 +383,71 @@ function init_preprocessing(input_width, display_container, sample_container, on
             return out_contour;
         }
 
-    	this.set_radius = function(radius, x1, y1, x2, y2) {
+        this.set_canvas = function(x1, y1, x2, y2) {
 
-    		this.r = radius;
-    		this.w = x2-x1;
-    		this.h = y2-y1;
-    		this.sx = (x1 + x2)/2;
-    		this.sy = (y1 + y2)/2;
+            w = x2-x1;
+            h = y2-y1;
+            sx = (x1 + x2)/2;
+            sy = (y1 + y2)/2;
 
-    		var r2 = Math.sqrt(2);
-	        this.px = this.sx + radius/r2;
-	        this.py = this.sy + radius/r2;
+            nps = [];
+            total = this.raw_contours.rows;
+            sumx = 0;
+            sumy = 0;
+            for(var i = 0;i<total;++i){
+                var temp = this.raw_contours.row(i).data32S;
+                var x = (temp[0]*1.0 / capture_res - 0.5) * w;
+                var y = (temp[1]*1.0 / capture_res - 0.5) * h;
+                
+                var r = Math.sqrt(x*x + y*y);
+                var t = Math.atan2(y, x);
 
-	        this.nps = [];
-	        total = this.raw_contours.rows;
-	        var sumx = 0;
-	        var sumy = 0;
-	        for(var i = 0;i<total;++i){
-	        	var temp = this.raw_contours.row(i).data32S;
-	        	var x = (temp[0]*1.0 / capture_res - 0.5) * this.w;
-	        	var y = (temp[1]*1.0 / capture_res - 0.5) * this.h;
-	            
-	        	var r = Math.sqrt(x*x + y*y);
-	        	var t = Math.atan2(y, x);
+                nps.push([x + sx, y + sy, r, t]);
 
-	            this.nps.push([x + this.sx, y + this.sy, r, t]);
+                sumx += x;
+                sumy += y;
+            }
 
-	            sumx += x;
-	            sumy += y;
-	        }
+            this.set_radius = function(radius) {
 
-	        var angle = Math.atan2(sumy, sumx);
+                r = radius;
 
-	        this.px = this.sx + radius*Math.cos(angle);
-	        this.py = this.sy + radius*Math.sin(angle);
+                var angle = Math.atan2(sumy, sumx);
 
-	        this.tx = (this.sy - this.py) / radius;
-	        this.ty = (this.px - this.sx) / radius;
-    	};
+                px = sx + radius*Math.cos(angle);
+                py = sy + radius*Math.sin(angle);
 
-    	this.get_contours = function(time) {
-    		var t = Math.cos(time*Math.PI/2);
+                tx = (sy - py) / radius;
+                ty = (px - sx) / radius;
 
-	        out = [];
-	        total = this.raw_contours.rows;
-	        for(var i = 0;i<total;++i){
-	        	var temp = this.nps[i];
-	        	var x = temp[0];
-	        	var y = temp[1];
 
-	        	var d = (x - this.px)*this.tx + (y - this.py)*this.ty;
-	        	var prx = this.px + this.tx*d*0.2;
-				var pry = this.py + this.ty*d*0.2;
 
-				out.push([(x - prx)*t + prx, (y - pry)*t + pry]);
-	        }
-	        return out;
+                this.get_contours = function(time) {
+                    var t = Math.cos(time*Math.PI/2);
 
-    	};
+                    out = [];
+                    total = this.raw_contours.rows;
+                    for(var i = 0;i<total;++i){
+                        var temp = nps[i];
+                        var x = temp[0];
+                        var y = temp[1];
+
+                        var d = (x - px)*tx + (y - py)*ty;
+                        var prx = px + tx*d*0.2;
+                        var pry = py + ty*d*0.2;
+
+                        out.push([(x - prx)*t + prx, (y - pry)*t + pry]);
+                    }
+                    return out;
+
+                };
+
+                return [px, py]
+            };
+
+            return nps;
+        }
+
     }
 
 };

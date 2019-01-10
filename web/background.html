@@ -60,32 +60,18 @@
 
     init_preprocessing(parseInt($(window).width() / 3 - 30), $('#display_container'), $('#sample_container'), function(contour_obj){
         console.log("draw contour here!");
-        contour_obj.set_radius(moon_rad, 0, 0, width, height);
+        contour_obj.set_canvas(0, 0, width, height);
+        contour_obj.set_radius(moon_rad);
 
         var start_time = Date.now();
         var loop_count = 0;
+
         function drawDemo() {
             let begin = Date.now();
             let elapsed = (Date.now() - start_time)/1000.0;
+
             var contours = contour_obj.get_contours(elapsed*1.0 / loop_duration);
-
-            ctx.fillStyle = "black";
-            ctx.fillRect(0, 0, width, height);
-
-            ctx.beginPath();
-            ctx.arc(width/2, height/2, moon_rad, 0, 2 * Math.PI, false);
-            ctx.fillStyle = '#FEFCD7';
-            ctx.fill();
-
-            ctx.fillStyle = '#000';
-            ctx.beginPath();
-            ctx.moveTo(contours[0][0], contours[0][1]);
-            for(var i = 1; i < contours.length; ++i) {
-                ctx.lineTo(contours[i][0], contours[i][1]);
-            }
-            ctx.lineTo(contours[0][0], contours[0][1]);
-            ctx.closePath();
-            ctx.fill();
+            drawContour(contours);
 
             if(elapsed > loop_duration) {
                 loop_count = loop_count + 1;
@@ -100,7 +86,32 @@
         }
                 
         setTimeout(drawDemo, 0);
+    }, function(contour_obj) {
+
+        var contours = contour_obj.set_canvas(0, 0, width, height);
+        drawContour(contours);
+
     });
+
+    function drawContour(contours) {
+        ctx.fillStyle = "black";
+        ctx.fillRect(0, 0, width, height);
+
+        ctx.beginPath();
+        ctx.arc(width/2, height/2, moon_rad, 0, 2 * Math.PI, false);
+        ctx.fillStyle = '#FEFCD7';
+        ctx.fill();
+
+        ctx.fillStyle = '#000';
+        ctx.beginPath();
+        ctx.moveTo(contours[0][0], contours[0][1]);
+        for(var i = 1; i < contours.length; ++i) {
+            ctx.lineTo(contours[i][0], contours[i][1]);
+        }
+        ctx.lineTo(contours[0][0], contours[0][1]);
+        ctx.closePath();
+        ctx.fill();
+    }
 
     init_shadow();
 

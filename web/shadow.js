@@ -134,9 +134,15 @@ function init_shadow() {
 			});
 		}
 
-		function get_match(response) {
+		function get_class_score(response, class_indices) {
 			return tf.tidy(() => {
-				return tf.argMax(response, 1);
+
+				var class_scores = [];
+				for(var c in class_indices) {
+					class_scores.push(tf.max(response.gather(class_indices[c], 1), 1));
+				}
+
+				return tf.stack(class_scores, 1);
 			});
 		}
 
@@ -184,7 +190,37 @@ function init_shadow() {
 
 		const templates = tf.tensor2d(weights[6]["d"], weights[6]["s"]);
 		const class_lut = weights[7]["d"];
-				
+
+		const class_indices = {};
+		for(var i in class_lut) {
+			if(class_indices[class_lut[i]] == null) {
+				var k = class_lut[i];
+				class_indices[k] = class_lut.map( function( cls, idx ){ return ( cls == k) ? idx : -1 } ).filter(function(item){return item != -1;});
+			}
+		}
+
+		const class_list = [];
+		for(var c in class_indices) {
+			class_list.push(c);
+		}
+
+
+		function sort_indices(ary) {
+			indices = Array.apply(null, {length: ary.length}).map(Function.call, Number);
+			indices.sort(function(a, b){
+				return ary[b] - ary[a];
+			});
+			return indices;
+		}
+
+		function re_order(ary, indices) {
+			out = [];
+			for(var i in indices) {
+				out.push(ary[indices[i]]);
+			}
+			return out;
+		}
+
 		window.classify_contour = function(contour_obj, on_inferred_callback) {
 		  
 		  	var eqi_length = contour_obj.re_contour(256);
@@ -193,17 +229,17 @@ function init_shadow() {
 	  		const input = normalize(r_t[0], r_t[1]);
 			const r0 = compute(input);
 			const raw = compare(r0, templates);
-			const match_indices = get_match(raw);
-			raw.data().then(function(raw_cpu){
-				match_indices.data().then(function(match_indices_cpu){
-					output_class = class_lut[match_indices_cpu[0]]
-		    		on_inferred_callback(contour_obj.id, output_class, raw_cpu[0][output_class]);
-		    		input.dispose();
-		    		r0.dispose();
-		    		raw.dispose();
-		    		match_indices.dispose();
-				})
-			});
+			const class_scores = get_class_score(raw, class_indices);
+			class_scores.data().then(function(class_scores_cpu){
+
+				var indices = sort_indices(class_scores_cpu);
+
+	     		on_inferred_callback(contour_obj.id, re_order(class_list, indices), re_order(class_scores_cpu, indices));
+	    		input.dispose();
+	    		r0.dispose();
+	    		raw.dispose();
+	    		class_scores.dispose();
+			})
 		};
 
 	}
