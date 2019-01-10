@@ -54,12 +54,9 @@ function init_preprocessing(input_width, display_container, sample_container, on
 
 
     function reset_state() {
-        mode = 0;
-        mode_steps = 0;
         tx = -1;
         ty = -1;
         allow_pre_capture = false;
-        background.setTo(new cv.Scalar(0, 0, 0, 255));
         first = true;
     }
 
@@ -140,6 +137,9 @@ function init_preprocessing(input_width, display_container, sample_container, on
         preview_image = new cv.Mat(disp_height, disp_height, cv.CV_8UC4);
 
         reset_state();
+        mode = 0;
+        mode_steps = 0;
+        background.setTo(new cv.Scalar(0, 0, 0, 255));
 
         video = document.getElementById("videoInput"); // video is the id of video tag
         video.srcObject = stream;
@@ -171,8 +171,8 @@ function init_preprocessing(input_width, display_container, sample_container, on
             xy = maxTuple.maxLoc;
             max_value = maxTuple.maxVal;
 
-            if(max_value < 20 && mode_steps > 50) {
-                mode = 1;
+            if(max_value < 20 && mode_steps > 70) {
+                mode = 2;
                 mode_steps = 0;
                 allow_capture = false;
             }
@@ -276,7 +276,7 @@ function init_preprocessing(input_width, display_container, sample_container, on
             contours.delete();
             hierarchy.delete();
 
-            cv.resize(data_image, disp, new cv.Size(disp_width, disp_width));
+            cv.resize(src_cap, disp, new cv.Size(disp_width, disp_width));
             cv.imshow("canvasOutput", disp); // canvasOutput is the id of another <canvas>;
             // cv.imshow("canvasOutput", dst); // canvasOutput is the id of another <canvas>;
 

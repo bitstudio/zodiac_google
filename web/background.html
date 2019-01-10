@@ -50,9 +50,9 @@
     var loop_duration = 2;
     var total_loop = 3;
     var FPS = 30;
-    var width = 300;
-    var height = 300;
-    var moon_rad = 100;
+    var width = parseInt($(window).width() / 3 - 30);
+    var height = width;
+    var moon_rad = width*0.4;
     canvasElement = $('<canvas id="drawFrame" width="' + width + '" height="' + height + '"></canvas>');
     $('#draw_container').append(canvasElement);
     drawFrame = document.getElementById("drawFrame"); // canvasFrame is the id of <canvas>
