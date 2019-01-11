@@ -355,28 +355,28 @@ function init_preprocessing(input_width, display_container, sample_container, on
         this.re_contour = function(size) {
 
             var len_contour = this.raw_contours.rows;
-            c_p = this.raw_contours.row(0).data32S;
-            contour_portions = [0.0];
+            var c_p = this.raw_contours.row(0).data32S;
+            var contour_portions = [0.0];
             for(var i = 1; i<len_contour; ++i) {
-                n_p = this.raw_contours.row(i).data32S;
-                dist = point_dist(n_p, c_p);
+                var n_p = this.raw_contours.row(i).data32S;
+                var dist = point_dist(n_p, c_p);
                 contour_portions.push(dist + contour_portions[i - 1]);
                 c_p = n_p;
             }
-            n_p = this.raw_contours.row(0).data32S;
-            dist = point_dist(n_p, c_p);
-            total_length = dist + contour_portions[len_contour - 1];
+            var n_p = this.raw_contours.row(0).data32S;
+            var dist = point_dist(n_p, c_p);
+            var total_length = dist + contour_portions[len_contour - 1];
             contour_portions.push(total_length);
 
-            out_contour = [];
-            index = 1
+            var out_contour = [];
+            var index = 1
             for(var i = 0;i<size;++i) {
-                cs = total_length * i * 0.999 / (size - 1);
+                var cs = total_length * i * 0.999 / (size - 1);
                 while(contour_portions[index] < cs) {
                     index = index + 1;
                 }
-                alpha = (cs - contour_portions[index - 1]) / (contour_portions[index] - contour_portions[index - 1]);
-                new_point = interpolate_point(this.raw_contours.row(index-1).data32S, this.raw_contours.row(index % len_contour).data32S, alpha);
+                var alpha = (cs - contour_portions[index - 1]) / (contour_portions[index] - contour_portions[index - 1]);
+                var new_point = interpolate_point(this.raw_contours.row(index-1).data32S, this.raw_contours.row(index % len_contour).data32S, alpha);
                 out_contour.push(new_point);
             }
 
@@ -385,15 +385,15 @@ function init_preprocessing(input_width, display_container, sample_container, on
 
         this.set_canvas = function(x1, y1, x2, y2) {
 
-            w = x2-x1;
-            h = y2-y1;
-            sx = (x1 + x2)/2;
-            sy = (y1 + y2)/2;
+            var w = x2-x1;
+            var h = y2-y1;
+            var sx = (x1 + x2)/2;
+            var sy = (y1 + y2)/2;
 
-            nps = [];
-            total = this.raw_contours.rows;
-            sumx = 0;
-            sumy = 0;
+            var nps = [];
+            var total = this.raw_contours.rows;
+            var sumx = 0;
+            var sumy = 0;
             for(var i = 0;i<total;++i){
                 var temp = this.raw_contours.row(i).data32S;
                 var x = (temp[0]*1.0 / capture_res - 0.5) * w;
@@ -410,23 +410,21 @@ function init_preprocessing(input_width, display_container, sample_container, on
 
             this.set_radius = function(radius) {
 
-                r = radius;
+                var r = radius;
 
                 var angle = Math.atan2(sumy, sumx);
 
-                px = sx + radius*Math.cos(angle);
-                py = sy + radius*Math.sin(angle);
+                var px = sx + radius*Math.cos(angle);
+                var py = sy + radius*Math.sin(angle);
 
-                tx = (sy - py) / radius;
-                ty = (px - sx) / radius;
-
-
+                var tx = (sy - py) / radius;
+                var ty = (px - sx) / radius;
 
                 this.get_contours = function(time) {
                     var t = Math.cos(time*Math.PI/2);
 
-                    out = [];
-                    total = this.raw_contours.rows;
+                    var out = [];
+                    var total = this.raw_contours.rows;
                     for(var i = 0;i<total;++i){
                         var temp = nps[i];
                         var x = temp[0];
