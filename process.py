@@ -6,7 +6,6 @@ import tensorflow as tf
 import json
 import dataformat
 import shutil
-import json
 from array import array
 
 weight_set_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "weight_sets")

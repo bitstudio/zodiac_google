@@ -236,7 +236,7 @@ function init_preprocessing(input_width, display_container, sample_container, on
             let hierarchy = new cv.Mat();
             cv.findContours(dst, contours, hierarchy, cv.RETR_LIST, cv.CHAIN_APPROX_SIMPLE);
 
-            var max_i = 0;
+            var max_i = -1;
             var max_size = 0;
 
             for (let i = 0; i < contours.size(); ++i) {
@@ -248,30 +248,35 @@ function init_preprocessing(input_width, display_container, sample_container, on
                 temp.delete();
             }
 
-            data_image.setTo(new cv.Scalar(255, 255, 255, 255));
-            let color = new cv.Scalar(0, 0, 0, 255);
-            cv.drawContours(data_image, contours, max_i, color, cv.FILLED, cv.LINE_8, hierarchy, 1);
+            if(max_i != -1 && max_size > 0)
+            {
 
-            let cnt = contours.get(max_i);
-            let Moments = cv.moments(cnt, false);
-            let cx = Moments.m10 / Moments.m00;
-            let cy = Moments.m01 / Moments.m00;
+                data_image.setTo(new cv.Scalar(255, 255, 255, 255));
+                let color = new cv.Scalar(0, 0, 0, 255);
+                cv.drawContours(data_image, contours, max_i, color, cv.FILLED, cv.LINE_8, hierarchy, 1);
 
-            if(on_shadow_callback != null)
-                on_shadow_callback(new Contour_Object(cnt));
+                let cnt = contours.get(max_i);
+                let Moments = cv.moments(cnt, false);
+                let cx = Moments.m10 / (Moments.m00 + 1e-6);
+                let cy = Moments.m01 / (Moments.m00 + 1e-6);
 
-            // console.log(cx, tx, cy, ty);
-            if (in_criterior(cx, cy)) {
-                if (new Date().getTime() - stamp > countdown) {
-                    capture(cnt);
+                if(on_shadow_callback != null)
+                    on_shadow_callback(new Contour_Object(cnt));
+
+                // console.log(cx, tx, cy, ty);
+                if (in_criterior(cx, cy)) {
+                    if (new Date().getTime() - stamp > countdown) {
+                        capture(cnt);
+                    }
+                } else {
+                    stamp = new Date().getTime();
+                    allow_capture = true;
                 }
-            } else {
-                stamp = new Date().getTime();
-                allow_capture = true;
-            }
 
-            tx = tx * (1.0 - ta) + cx * ta;
-            ty = ty * (1.0 - ta) + cy * ta;
+                tx = tx * (1.0 - ta) + cx * ta;
+                ty = ty * (1.0 - ta) + cy * ta;
+
+            }
 
             contours.delete();
             hierarchy.delete();
@@ -383,7 +388,15 @@ function init_preprocessing(input_width, display_container, sample_container, on
             return out_contour;
         }
 
-        this.set_canvas = function(x1, y1, x2, y2) {
+        this.set_canvas = function(x1, y1, x2, y2, size) {
+
+            var new_contour = null;
+            var total = this.raw_contours.rows;
+            if(size != null)
+            {
+                new_contour = this.re_contour(size);
+                total = size;
+            }
 
             var w = x2-x1;
             var h = y2-y1;
@@ -391,57 +404,13 @@ function init_preprocessing(input_width, display_container, sample_container, on
             var sy = (y1 + y2)/2;
 
             var nps = [];
-            var total = this.raw_contours.rows;
-            var sumx = 0;
-            var sumy = 0;
             for(var i = 0;i<total;++i){
-                var temp = this.raw_contours.row(i).data32S;
+                var temp = new_contour ? new_contour[i] : this.raw_contours.row(i).data32S;
                 var x = (temp[0]*1.0 / capture_res - 0.5) * w;
                 var y = (temp[1]*1.0 / capture_res - 0.5) * h;
                 
-                var r = Math.sqrt(x*x + y*y);
-                var t = Math.atan2(y, x);
-
-                nps.push([x + sx, y + sy, r, t]);
-
-                sumx += x;
-                sumy += y;
+                nps.push([x + sx, y + sy]);
             }
-
-            this.set_radius = function(radius) {
-
-                var r = radius;
-
-                var angle = Math.atan2(sumy, sumx);
-
-                var px = sx + radius*Math.cos(angle);
-                var py = sy + radius*Math.sin(angle);
-
-                var tx = (sy - py) / radius;
-                var ty = (px - sx) / radius;
-
-                this.get_contours = function(time) {
-                    var t = Math.cos(time*Math.PI/2);
-
-                    var out = [];
-                    var total = this.raw_contours.rows;
-                    for(var i = 0;i<total;++i){
-                        var temp = nps[i];
-                        var x = temp[0];
-                        var y = temp[1];
-
-                        var d = (x - px)*tx + (y - py)*ty;
-                        var prx = px + tx*d*0.2;
-                        var pry = py + ty*d*0.2;
-
-                        out.push([(x - prx)*t + prx, (y - pry)*t + pry]);
-                    }
-                    return out;
-
-                };
-
-                return [px, py]
-            };
 
             return nps;
         }

@@ -13,6 +13,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@0.14.1/dist/tf.min.js"> </script>
     <script src="preprocessing.js"></script>
     <script src="shadow.js"></script>
+    <script src="morph.js"></script>
 </head>
 
 <body>
@@ -61,8 +62,9 @@
     var draw_preview = true;
     init_preprocessing(parseInt($(window).width() / 3 - 30), $('#display_container'), $('#sample_container'), function(contour_obj){
         console.log("draw contour here!");
-        contour_obj.set_canvas(0, 0, width, height);
-        contour_obj.set_radius(moon_rad);
+        var nps = contour_obj.set_canvas(0, 0, width, height, 256);
+
+        var morph_object = new Morph_Object(nps, contour_obj["class"][0], 0, 0, width, height)
 
         var start_time = Date.now();
         var loop_count = 0;
@@ -72,7 +74,7 @@
             let begin = Date.now();
             let elapsed = (Date.now() - start_time)/1000.0;
 
-            var contours = contour_obj.get_contours(elapsed*1.0 / loop_duration);
+            var contours = morph_object.get_contours(elapsed*2.0 / loop_duration - 1.0);
             drawContour(contours);
 
             if(elapsed > loop_duration) {
@@ -119,6 +121,8 @@
     }
 
     init_shadow();
+
+    init_morph();
 
     </script>
 </body>
