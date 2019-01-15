@@ -49,7 +49,7 @@
     }
 
     var loop_duration = 2;
-    var total_loop = 3;
+    var total_loop = 1;
     var FPS = 30;
     var width = parseInt($(window).width() / 3 - 30);
     var height = width;
@@ -69,8 +69,8 @@
         var start_time = Date.now();
         var loop_count = 0;
 
-        draw_preview = false;
         function drawDemo() {
+            draw_preview = false;
             let begin = Date.now();
             let elapsed = (Date.now() - start_time)/1000.0;
 

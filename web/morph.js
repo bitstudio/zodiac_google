@@ -127,11 +127,11 @@ function init_morph() {
 
                 var r_, t_;
                 if(s < 0) {
-                    r_ = r * (-s) + (1 + s) * max_dist / 5;
+                    r_ = r * (-s) + (1 + s) * max_dist / 10;
                     t_ = t - (max_dist - r_) * dtdr * (1 + s);
                 }
                 else {
-                    r_ = r * (s) + (1 - s) * max_dist / 5;
+                    r_ = r * (s) + (1 - s) * max_dist / 10;
                     t_ = t + (r_) * dtdr * (1 - s);
                 }
 

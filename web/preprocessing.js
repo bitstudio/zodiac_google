@@ -259,22 +259,27 @@ function init_preprocessing(input_width, display_container, sample_container, on
                 let Moments = cv.moments(cnt, false);
                 let cx = Moments.m10 / (Moments.m00 + 1e-6);
                 let cy = Moments.m01 / (Moments.m00 + 1e-6);
+                let area = cv.contourArea(cnt);
 
-                if(on_shadow_callback != null)
-                    on_shadow_callback(new Contour_Object(cnt));
+                if(area < capture_res*capture_res/2)
+                {
+                    if(on_shadow_callback != null)
+                        on_shadow_callback(new Contour_Object(cnt));
 
-                // console.log(cx, tx, cy, ty);
-                if (in_criterior(cx, cy)) {
-                    if (new Date().getTime() - stamp > countdown) {
-                        capture(cnt);
+                    // console.log(cx, tx, cy, ty);
+                    if (in_criterior(cx, cy)) {
+                        if (new Date().getTime() - stamp > countdown) {
+                            capture(cnt);
+                        }
+                    } else {
+                        stamp = new Date().getTime();
+                        allow_capture = true;
                     }
-                } else {
-                    stamp = new Date().getTime();
-                    allow_capture = true;
+
+                    tx = tx * (1.0 - ta) + cx * ta;
+                    ty = ty * (1.0 - ta) + cy * ta;                   
                 }
 
-                tx = tx * (1.0 - ta) + cx * ta;
-                ty = ty * (1.0 - ta) + cy * ta;
 
             }
 
