@@ -64,13 +64,15 @@
         console.log("draw contour here!");
         var nps = contour_obj.set_canvas(0, 0, width, height, 256);
 
+        if(!draw_preview) return;
+        draw_preview = false;
+        
         prepare_morph(nps, contour_obj["class"][0], 0, 0, width, height, function(morph_object){
 
             var start_time = Date.now();
             var loop_count = 0;
 
             function drawDemo() {
-                draw_preview = false;
                 let begin = Date.now();
                 let elapsed = (Date.now() - start_time)/1000.0;
 
