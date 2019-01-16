@@ -94,7 +94,7 @@ function init_morph() {
 
 	function on_ready(target_contours, scale) {
 
-		window.Morph_Object = function(nps, target_id, x, y, width, height) {
+		window.prepare_morph = function(nps, target_id, x, y, width, height, on_ready) {
 
             var target = target_contours[target_id];
 
@@ -138,7 +138,7 @@ function init_morph() {
                 return [r_, t_];             
             }
 
-            this.get_contours = function(step) {
+            var get_contours = function(step) {
                 
                 var s = Math.sin(step * Math.PI / 2);
                 var out = [];
@@ -171,6 +171,8 @@ function init_morph() {
                 }
                 return out; 
 	        };
+
+            on_ready(get_contours);
 
 		};
 

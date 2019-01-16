@@ -64,34 +64,37 @@
         console.log("draw contour here!");
         var nps = contour_obj.set_canvas(0, 0, width, height, 256);
 
-        var morph_object = new Morph_Object(nps, contour_obj["class"][0], 0, 0, width, height)
+        prepare_morph(nps, contour_obj["class"][0], 0, 0, width, height, function(morph_object){
 
-        var start_time = Date.now();
-        var loop_count = 0;
+            var start_time = Date.now();
+            var loop_count = 0;
 
-        function drawDemo() {
-            draw_preview = false;
-            let begin = Date.now();
-            let elapsed = (Date.now() - start_time)/1000.0;
+            function drawDemo() {
+                draw_preview = false;
+                let begin = Date.now();
+                let elapsed = (Date.now() - start_time)/1000.0;
 
-            var contours = morph_object.get_contours(elapsed*2.0 / loop_duration - 1.0);
-            drawContour(contours);
+                var contours = morph_object(elapsed*2.0 / loop_duration - 1.0);
+                drawContour(contours);
 
-            if(elapsed > loop_duration) {
-                loop_count = loop_count + 1;
-                start_time = Date.now();
+                if(elapsed > loop_duration) {
+                    loop_count = loop_count + 1;
+                    start_time = Date.now();
+                }
+
+                if(loop_count < total_loop)
+                {
+                    let delay = 1000 / FPS - (Date.now() - begin);
+                    setTimeout(drawDemo, delay);
+                }else{
+                    draw_preview = true;
+                }
             }
+                    
+            setTimeout(drawDemo, 0);
 
-            if(loop_count < total_loop)
-            {
-                let delay = 1000 / FPS - (Date.now() - begin);
-                setTimeout(drawDemo, delay);
-            }else{
-                draw_preview = true;
-            }
-        }
-                
-        setTimeout(drawDemo, 0);
+        });
+
     }, function(contour_obj) {
 
         var contours = contour_obj.set_canvas(0, 0, width, height);
