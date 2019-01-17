@@ -92,6 +92,24 @@ function init_morph() {
         return [cx, cy]
     }
 
+    function interpolate_theta(t0, t1, alpha) {
+        var a0 = 1-alpha;
+        var a1 = alpha;
+
+        if(t1 > t0){
+            if(t1 - t0 < Math.PI*2 + t0 - t1)
+                return t0*a0 + t1*a1;
+            else
+                return (t0+Math.PI*2)*a0 + t1*a1;
+        }else{
+            if(t0 - t1 < Math.PI*2 + t1 - t0)
+                return t0*a0 + t1*a1;
+            else
+                return t0*a0 + (t1+Math.PI*2)*a1;
+        }
+    }
+
+
 	function on_ready(target_contours, scale) {
 
 		window.prepare_morph = function(nps, target_id, x, y, width, height, on_ready) {
@@ -123,51 +141,18 @@ function init_morph() {
             var max_dist = Math.sqrt(width * width + height * height);
             var dtdr=0.01;
 
-            function radial_kernel(r, t, s) {
-
-                var r_, t_;
-                if(s < 0) {
-                    r_ = r * (-s) + (1 + s) * max_dist / 10;
-                    t_ = t - (max_dist - r_) * dtdr * (1 + s);
-                }
-                else {
-                    r_ = r * (s) + (1 - s) * max_dist / 10;
-                    t_ = t + (r_) * dtdr * (1 - s);
-                }
-
-                return [r_, t_];             
-            }
-
             var get_contours = function(step) {
                 
-                var s = Math.sin(step * Math.PI / 2);
+                var s = (Math.sin(step * Math.PI / 2) + 1)*0.5;
                 var out = [];
-                if(s < 0)
-                {
-                    var alpha = Math.abs(s)
-                    for(var i = 0;i<R.length;++i) {
+                for(var i = 0;i<R.length;++i) {
 
-                        var rt_ = radial_kernel(R[i], T[i], s)
+                    var r_ = R[i]*(1-s) + tR[i]*s;
+                    var t_ = interpolate_theta(T[i], tT[i], s);
 
-                        var r_ = rt_[0];
-                        var t_ = rt_[1];
-
-                        var x_ = x + r_ * Math.cos(t_) + center[0] * (alpha) + (1 - alpha) * width * 0.5;
-                        var y_ = y + r_ * Math.sin(t_) + center[1] * (alpha) + (1 - alpha) * height * 0.5;
-                        out.push([x_, y_]);
-                    }                    
-                }else{
-                    for(var i = 0;i<tR.length;++i) {
-
-                        var rt_ = radial_kernel(tR[i], tT[i], s)
-
-                        var r_ = rt_[0];
-                        var t_ = rt_[1];
-
-                        var x_ = x + r_ * Math.cos(t_) + width * 0.5;
-                        var y_ = y + r_ * Math.sin(t_) + height * 0.5;
-                        out.push([x_, y_]);
-                    }  
+                    var x_ = x + r_ * Math.cos(t_) + center[0] * (1-s)+ s * width * 0.5;
+                    var y_ = y + r_ * Math.sin(t_) + center[1] * (1-s) + s * height * 0.5;
+                    out.push([x_, y_]);
                 }
                 return out; 
 	        };

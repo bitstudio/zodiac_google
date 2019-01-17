@@ -255,19 +255,15 @@ function init_preprocessing(input_width, display_container, sample_container, on
                 let color = new cv.Scalar(0, 0, 0, 255);
                 cv.drawContours(data_image, contours, max_i, color, cv.FILLED, cv.LINE_8, hierarchy, 1);
 
-                let cnt = contours.get(max_i);
-                let Moments = cv.moments(cnt, false);
-                let cx = Moments.m10 / (Moments.m00 + 1e-6);
-                let cy = Moments.m01 / (Moments.m00 + 1e-6);
-                let area = cv.contourArea(cnt);
+                let cnt = new Contour_Object(contours.get(max_i));
 
-                if(area < capture_res*capture_res/2)
+                if(cnt.area < capture_res*capture_res/2)
                 {
                     if(on_shadow_callback != null)
-                        on_shadow_callback(new Contour_Object(cnt));
+                        on_shadow_callback(cnt);
 
                     // console.log(cx, tx, cy, ty);
-                    if (in_criterior(cx, cy)) {
+                    if (in_criterior(cnt.cx, cnt.cy)) {
                         if (new Date().getTime() - stamp > countdown) {
                             capture(cnt);
                         }
@@ -276,8 +272,8 @@ function init_preprocessing(input_width, display_container, sample_container, on
                         allow_capture = true;
                     }
 
-                    tx = tx * (1.0 - ta) + cx * ta;
-                    ty = ty * (1.0 - ta) + cy * ta;                   
+                    tx = tx * (1.0 - ta) + cnt.cx * ta;
+                    ty = ty * (1.0 - ta) + cnt.cy * ta;                   
                 }
 
 
@@ -300,11 +296,10 @@ function init_preprocessing(input_width, display_container, sample_container, on
     // schedule first one.
 
     let contour_object_list = {};
-    function capture(contours) {
+    function capture(contour_obj) {
         if (!allow_capture) return;
         allow_capture = false;
 
-        var contour_obj = new Contour_Object(contours);
         contour_object_list[contour_obj.id] = contour_obj;
 
         cv.imshow("dataFrame", data_image);
@@ -353,6 +348,12 @@ function init_preprocessing(input_width, display_container, sample_container, on
     	this.class = null;
     	this.raw_contours = contours;
         
+        var Moments = cv.moments(contours, false);
+        this.cx = Moments.m10 / (Moments.m00 + 1e-6);
+        this.cy = Moments.m01 / (Moments.m00 + 1e-6);
+        var a = cv.contourArea(contours, true);
+        this.ccw = a < 0;
+        this.area = Math.abs(a);
 
         function point_dist(p0, p1) {
             return Math.sqrt((p0[0] - p1[0])*(p0[0] - p1[0]) + (p0[1] - p1[1])*(p0[1] - p1[1]));
@@ -387,7 +388,8 @@ function init_preprocessing(input_width, display_container, sample_container, on
                 }
                 var alpha = (cs - contour_portions[index - 1]) / (contour_portions[index] - contour_portions[index - 1]);
                 var new_point = interpolate_point(this.raw_contours.row(index-1).data32S, this.raw_contours.row(index % len_contour).data32S, alpha);
-                out_contour.push(new_point);
+                if(this.ccw) out_contour.push(new_point);
+                else out_contour.unshift(new_point);
             }
 
             return out_contour;
