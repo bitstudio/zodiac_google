@@ -102,7 +102,7 @@ function init_preprocessing(input_width, display_container, sample_container, on
         body.append(dataElement);
         dataElement.hide();
 
-        capture_x = width/2;
+        capture_x = width*0.25;
         capture_y = height/2;
         M_raw_to_capture = cv.matFromArray(2, 3, cv.CV_64FC1, [1.0, 0, -(capture_x - capture_res*0.5), 0, 1.0, -(capture_y - capture_res*0.5)]);
 
