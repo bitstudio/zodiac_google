@@ -45,8 +45,8 @@ function init_preprocessing(input_width, display_container, sample_container, on
     let tx = -1;
     let ty = -1;
     let ta = 0.1;
-    let epsilon = 100;
-    let countdown = 2000;
+    let epsilon = 200;
+    let countdown = 1000;
     let stamp = new Date().getTime();
     let allow_capture = true;
     let allow_pre_capture = false;

@@ -160,7 +160,7 @@ function init_morph() {
         if(end < start) end = end + Rs.length;
 
         var out = [];
-        var g = 2;
+        var g = 1;
 
         out.push(start);
         for(var i = start+1;i<end;++i) {
@@ -298,34 +298,36 @@ function init_morph() {
             return k >= L? k-L: k;
         }
 
-        function _i(V, a) {
-            let f = parseInt(Math.floor(a));
-            let t = parseInt(Math.ceil(a));
+        function _i(V, a, L) {
+            let f = mod(parseInt(Math.floor(a)), L);
+            let t = mod(parseInt(Math.ceil(a)), L);
             let s = a - f;
             return V[f]*(1-s) + V[t]*s;
         }
+
+        var L = stats.R.length;
 
         for(var i = 0;i<map.length-1;++i) {
             var f = map[i];
             var t = map[i + 1];
 
-            var s = _ov(f[0], t[0], stats.R.length);
-            var st = _ov(f[1], t[1], stats.R.length);
+            var s = _ov(f[0], t[0], L);
+            var st = _ov(f[1], t[1], L);
 
-            var steps = Math.ceil((s + st)*0.2);
+            var steps = Math.ceil((s + st)*0.3);
 
             for(var j = 0;j<steps;++j) {
 
                 let s = 1.0*j/steps;
 
-                let _0 = _fi(f[0], t[0], stats.R.length, s);
-                let _1 = _fi(f[1], t[1], stats.R.length, s);
+                let _0 = _fi(f[0], t[0], L, s);
+                let _1 = _fi(f[1], t[1], L, s);
 
-                let x_ = _i(stats.X, _0);
-                let xt_ = _i(tstats.X, _1);
+                let x_ = _i(stats.X, _0, L);
+                let xt_ = _i(tstats.X, _1, L);
 
-                let y_ = _i(stats.Y, _0);
-                let yt_ = _i(tstats.Y, _1);
+                let y_ = _i(stats.Y, _0, L);
+                let yt_ = _i(tstats.Y, _1, L);
             
                 let r_ = Math.sqrt(x_*x_ + y_*y_); 
                 let rt_ = Math.sqrt(xt_*xt_ + yt_*yt_);
