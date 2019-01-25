@@ -178,8 +178,10 @@ function init_preprocessing(input_width, display_container, sample_container, on
             }
             mode_steps = mode_steps + 1;
 
-            cv.warpAffine(src, src_disp, M_raw_to_disp, new cv.Size(disp_width, disp_width));
-            cv.imshow("canvasOutput", src_disp);
+            cv.resize(src_cap, disp, new cv.Size(disp_width, disp_width));
+            cv.imshow("canvasOutput", disp);
+            // cv.warpAffine(src, src_disp, M_raw_to_disp, new cv.Size(disp_width, disp_width));
+            // cv.imshow("canvasOutput", src_disp);
 
         }else if(mode == 1) {
 
@@ -231,6 +233,8 @@ function init_preprocessing(input_width, display_container, sample_container, on
             cv.blur(dst, dst, kernel)
             cv.threshold(dst, dst, 100, 255, cv.THRESH_TRIANGLE);
             // cv.subtract(ones, dst, dst);
+            // let M = cv.Mat.ones(7, 7, cv.CV_8U);
+            // cv.morphologyEx(dst, dst, cv.MORPH_CLOSE, M);
 
             let contours = new cv.MatVector();
             let hierarchy = new cv.Mat();

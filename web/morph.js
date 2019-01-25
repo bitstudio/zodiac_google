@@ -241,7 +241,7 @@ function init_morph() {
 
                 if(_10 < _01) {
                     if(_10 < _11) {
-                        table[i][j] = cost + _10;
+                        table[i][j] = cost*2 + _10;
                         visit[i][j] = 10;
                     }else{
                         table[i][j] = cost + _11;
@@ -249,7 +249,7 @@ function init_morph() {
                     }
                 }else{
                     if(_01 < _11) {
-                        table[i][j] = cost + _01;
+                        table[i][j] = cost*2 + _01;
                         visit[i][j] = 1;
                     }else{
                         table[i][j] = cost + _11;
@@ -314,7 +314,7 @@ function init_morph() {
             var s = _ov(f[0], t[0], L);
             var st = _ov(f[1], t[1], L);
 
-            var steps = Math.ceil((s + st)*0.3);
+            var steps = Math.ceil((s + st)*1.0);
 
             for(var j = 0;j<steps;++j) {
 
