@@ -82,7 +82,7 @@ function init_preprocessing(input_width, display_container, sample_container, on
 
         body = $('body');
 
-        videoElement = $('<video id="videoInput" width="' + width + '" height="' + height + '"></video>');
+        videoElement = $('<video autoplay="true" control="true" playsinline="true" id="videoInput" width="' + width + '" height="' + height + '"></video>');
         body.append(videoElement);
         videoElement.hide();
 

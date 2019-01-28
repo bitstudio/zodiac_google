@@ -61,7 +61,7 @@ def find_a_center(points):
 
 
 def get_contour(img, size, invert=False):
-    processed = imageprocess.process_raw(img, size, 0, 0, None, None)
+    processed = imageprocess.process_raw(img, size, 0, 0, None, None, flip=False)
     contour = imageprocess.extract_contour(processed if not invert else 255 - processed)
     eqi_length = imageprocess.re_contour(contour, 256)
     return np.array(eqi_length)

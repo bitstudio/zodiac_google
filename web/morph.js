@@ -380,13 +380,14 @@ function init_morph() {
             var get_contours = function(step) {
                 
                 var s = (Math.sin(step * Math.PI / 2) + 1)*0.5;
+                var u = 1 - Math.exp(-(step + 1)*1.5);
                 var out = [];
                 for(var i = 0;i<map.length;++i) {
 
                     let tuple = map[i];
 
                     let r_ = tuple[0]*(1-s) + tuple[1]*s;
-                    let t_ = interpolate_theta(tuple[2], tuple[3], s);
+                    let t_ = interpolate_theta(tuple[2], tuple[3], u);
 
                     let x_ = x + r_ * Math.cos(t_) + stats.center[0] * (1-s) + s * tstats.center[0];
                     let y_ = y + r_ * Math.sin(t_) + stats.center[1] * (1-s) + s * tstats.center[1];
