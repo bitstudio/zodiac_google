@@ -1,4 +1,4 @@
-function init_preprocessing(input_width, display_container, sample_container, on_capture_callback, on_shadow_callback) {
+function init_preprocessing(input_width, display_container, sample_container, on_capture_callback, on_shadow_callback, on_calibration) {
   
 	let zodiac = true;
 
@@ -177,6 +177,9 @@ function init_preprocessing(input_width, display_container, sample_container, on
                 allow_capture = false;
             }
             mode_steps = mode_steps + 1;
+            if(on_calibration != null) {
+                on_calibration(mode_steps*1.0/70);
+            }
 
             cv.resize(src_cap, disp, new cv.Size(disp_width, disp_width));
             cv.imshow("canvasOutput", disp);
@@ -277,10 +280,18 @@ function init_preprocessing(input_width, display_container, sample_container, on
                     }
 
                     tx = tx * (1.0 - ta) + cnt.cx * ta;
-                    ty = ty * (1.0 - ta) + cnt.cy * ta;                   
+                    ty = ty * (1.0 - ta) + cnt.cy * ta;     
+
+                }else{
+                    
+                    if(on_shadow_callback != null)
+                        on_shadow_callback(null);
                 }
 
+            }else{
 
+                if(on_shadow_callback != null)
+                    on_shadow_callback(null);
             }
 
             contours.delete();

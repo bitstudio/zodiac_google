@@ -99,10 +99,13 @@
 
     }, function(contour_obj) {
 
+        if(!contour_obj) return;
         var contours = contour_obj.set_canvas(0, 0, width, height);
         if(draw_preview)
             drawContour(contours);
 
+    }, function(percent){
+        console.log(percent);
     });
 
     function drawContour(contours) {

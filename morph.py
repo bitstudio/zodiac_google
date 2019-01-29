@@ -97,13 +97,13 @@ if __name__ == '__main__':
 
     img_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "templates", "large_template_front", "0.10.0,0,100,100.png")
 
+    size = (500, 500)
+
     raw_target_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), "data", "morph_targets")
     img2_path = os.path.join(raw_target_dir, "08.png")
 
     img = cv2.imread(img_path)
     img2 = cv2.imread(img2_path)
-
-    size = (500, 500)
 
     points = get_contour(img, size)
     center = find_a_center(points)
