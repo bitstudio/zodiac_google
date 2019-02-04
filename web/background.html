@@ -60,7 +60,7 @@
     ctx = drawFrame.getContext("2d");
 
     var draw_preview = true;
-    init_preprocessing(parseInt($(window).width() / 3 - 30), $('#display_container'), $('#sample_container'), function(contour_obj){
+    var controls = init_preprocessing(parseInt($(window).width() / 3 - 30), $('#display_container'), $('#sample_container'), function(contour_obj){
         console.log("draw contour here!");
         var nps = contour_obj.set_canvas(0, 0, width, height, 256);
 

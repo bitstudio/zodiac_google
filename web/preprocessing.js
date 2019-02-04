@@ -4,6 +4,7 @@ function init_preprocessing(input_width, display_container, sample_container, on
 
     let video = null;
     let package = null;
+    let thread = null
 
     let height = 0;
     let width = 0;
@@ -58,6 +59,7 @@ function init_preprocessing(input_width, display_container, sample_container, on
         ty = -1;
         allow_pre_capture = false;
         first = true;
+        allow_capture = true;
     }
 
     function in_criterior(x, y) {
@@ -65,18 +67,35 @@ function init_preprocessing(input_width, display_container, sample_container, on
     }
 
     $(document).ready(function() {
+        init(640, 480);
+        request_stream(assign_stream);
+    });
+
+    function request_stream(callback) {
         navigator.mediaDevices.getUserMedia({ video: { width: { min: 640 }, height: { min: 480 } }, audio: false })
             .then(function(stream) {
-                init_webcam(640, 480, stream);
-                setTimeout(processVideo, 0);
+                callback(stream);
             })
             .catch(function(err) {
                 console.log("An error occurred! " + err);
             });
-    });
+    };
 
+    function assign_stream(stream) {
+        if(thread != null) clearTimeout(thread);     
+        video = document.getElementById("videoInput"); // video is the id of video tag
+        video.srcObject = stream;
+        video.play();
+        thread = setTimeout(processVideo, 0);
+    }
 
-    function init_webcam(w, h, stream) {
+    function stop_stream(){
+        clearTimeout(thread);
+        thread = null;
+        video.srcObject.getTracks()[0].stop();
+    }
+
+    function init(w, h) {
         width = w;
         height = h;
 
@@ -140,10 +159,6 @@ function init_preprocessing(input_width, display_container, sample_container, on
         mode = 0;
         mode_steps = 0;
         background.setTo(new cv.Scalar(0, 0, 0, 255));
-
-        video = document.getElementById("videoInput"); // video is the id of video tag
-        video.srcObject = stream;
-        video.play();
     }
 
     function collectBackground() {
@@ -174,9 +189,12 @@ function init_preprocessing(input_width, display_container, sample_container, on
             if(max_value < 20 && mode_steps > 70) {
                 mode = 2;
                 mode_steps = 0;
-                allow_capture = false;
+                allow_capture = true;
             }
-            mode_steps = mode_steps + 1;
+
+            if(max_value < 20) mode_steps = mode_steps + 1;
+            else mode_steps = Math.max(mode_steps - 1, 0);
+            
             if(on_calibration != null) {
                 on_calibration(mode_steps*1.0/70);
             }
@@ -211,7 +229,7 @@ function init_preprocessing(input_width, display_container, sample_container, on
             if (mode_steps > 30 && max_value < 20) {
                 mode = 2;
                 mode_steps = 0;
-                allow_capture = false;
+                allow_capture = true;
             }
 
 
@@ -276,7 +294,6 @@ function init_preprocessing(input_width, display_container, sample_container, on
                         }
                     } else {
                         stamp = new Date().getTime();
-                        allow_capture = true;
                     }
 
                     tx = tx * (1.0 - ta) + cnt.cx * ta;
@@ -306,7 +323,7 @@ function init_preprocessing(input_width, display_container, sample_container, on
 
         // schedule next one.
         let delay = 1000 / FPS - (Date.now() - begin);
-        setTimeout(processVideo, delay);
+        thread = setTimeout(processVideo, delay);
     }
     // schedule first one.
 
@@ -439,4 +456,18 @@ function init_preprocessing(input_width, display_container, sample_container, on
 
     }
 
+    return {
+        restart: function() {
+            reset_state();
+            mode = 0;
+            mode_steps = 0;
+        },
+        shutdown: function() {
+            stop_stream();
+        },
+        reset_camera: function() {
+            stop_stream();
+            request_stream(assign_stream);
+        }
+    };
 };
