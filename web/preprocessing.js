@@ -13,7 +13,6 @@ function init_preprocessing(input_width, display_container, sample_container, on
     let canvasFrame = null;
     let context = null;
     let src = null;
-    let background = null;
     let dst = null;
     let ones = null;
     let zeros = null;
@@ -40,7 +39,6 @@ function init_preprocessing(input_width, display_container, sample_container, on
 
     let mode = 0;
     let mode_steps = 0
-    let background_update_alpha = 0.05
 
     // tracking
     let tx = -1;
@@ -145,8 +143,7 @@ function init_preprocessing(input_width, display_container, sample_container, on
         src_cap = new cv.Mat(capture_res, capture_res, cv.CV_8UC4, new cv.Scalar(255, 255, 255, 255));
         src_disp = new cv.Mat(disp_height, disp_width, cv.CV_8UC4, new cv.Scalar(255, 255, 255, 255));
 
-        background = new cv.Mat(capture_res, capture_res, cv.CV_8UC4, new cv.Scalar(0, 0, 0, 255));
-        diff = new cv.Mat(capture_res, capture_res, cv.CV_8UC4);
+        hsv = new cv.Mat(capture_res, capture_res, cv.CV_8UC4);
         dst = new cv.Mat(capture_res, capture_res, cv.CV_8UC1);
         ones = new cv.Mat(capture_res, capture_res, cv.CV_8UC1, new cv.Scalar(255, 255, 255, 255));
         zeros = new cv.Mat(capture_res, capture_res, cv.CV_8UC1, new cv.Scalar(0, 0, 0, 255));
@@ -158,11 +155,6 @@ function init_preprocessing(input_width, display_container, sample_container, on
         reset_state();
         mode = 0;
         mode_steps = 0;
-        background.setTo(new cv.Scalar(0, 0, 0, 255));
-    }
-
-    function collectBackground() {
-        cv.addWeighted(background, 1.0 - background_update_alpha, src_cap, background_update_alpha, 0, background);
     }
 
 
@@ -175,25 +167,13 @@ function init_preprocessing(input_width, display_container, sample_container, on
 
         if (mode == 0) {
 
-            collectBackground();
-
-            cv.absdiff(src_cap, background, diff);
-            cv.cvtColor(diff, dst, cv.COLOR_RGBA2GRAY);
-
-            kernel = new cv.Size(21, 21);
-            cv.blur(dst, dst, kernel);
-            maxTuple = cv.minMaxLoc(dst); 
-            xy = maxTuple.maxLoc;
-            max_value = maxTuple.maxVal;
-
-            if(max_value < 20 && mode_steps > 70) {
+            if(mode_steps > 70) {
                 mode = 2;
                 mode_steps = 0;
                 allow_capture = true;
             }
 
-            if(max_value < 20) mode_steps = mode_steps + 1;
-            else mode_steps = Math.max(mode_steps - 1, 0);
+            mode_steps = mode_steps + 1;
             
             if(on_calibration != null) {
                 on_calibration(mode_steps*1.0/70);
@@ -204,51 +184,18 @@ function init_preprocessing(input_width, display_container, sample_container, on
             // cv.warpAffine(src, src_disp, M_raw_to_disp, new cv.Size(disp_width, disp_width));
             // cv.imshow("canvasOutput", src_disp);
 
-        }else if(mode == 1) {
-
-            collectBackground();
-
-            cv.absdiff(src_cap, background, diff);
-            cv.cvtColor(diff, dst, cv.COLOR_RGBA2GRAY);
-
-            kernel = new cv.Size(21, 21);
-            cv.blur(dst, dst, kernel);
-            maxTuple = cv.minMaxLoc(dst); 
-            xy = maxTuple.maxLoc;
-            max_value = maxTuple.maxVal;
-
-            if(max_value > 50) {
-                allow_pre_capture = true;
-                mode_steps = 0;
-            }
-
-            if(allow_pre_capture) {
-                mode_steps = mode_steps + 1;
-            }
-
-            if (mode_steps > 30 && max_value < 20) {
-                mode = 2;
-                mode_steps = 0;
-                allow_capture = true;
-            }
-
-
-            cv.warpAffine(src, src_disp, M_raw_to_disp, new cv.Size(disp_width, disp_width));
-            cv.imshow("canvasOutput", src_disp);
-
-            var dwcr = disp_width / (width - raw_offset_x*2);
-            var dhcr = disp_height / (height - raw_offset_y*2);
-            rawContext.strokeStyle = "blue";
-            rawContext.rect((capture_x - capture_res*0.5 - raw_offset_x) * dwcr,
-                (capture_y - capture_res*0.5 - raw_offset_y) * dhcr, capture_res * dwcr, capture_res * dhcr);
-            rawContext.stroke();
-
-
         }else if(mode == 2) {
 
 
-            cv.absdiff(src_cap, background, diff);
-            cv.cvtColor(diff, dst, cv.COLOR_RGBA2GRAY);
+            cv.cvtColor(src_cap, hsv, cv.COLOR_RGB2HSV);
+
+            let HSVPlanes = new cv.MatVector();
+            cv.split(hsv, HSVPlanes);
+            let H = HSVPlanes.get(0);
+            let S = HSVPlanes.get(1);
+
+            cv.subtract(ones, H, H);
+            cv.multiply(H, S, dst, 1/255.0);
 
             kernel = new cv.Size(5, 5)
             cv.blur(dst, dst, kernel)

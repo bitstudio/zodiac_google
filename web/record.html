@@ -64,7 +64,7 @@
         return decodeURIComponent(results[2].replace(/\+/g, ' '));
     }
 
-    var zodiac = JSON.parse(getParameterByName('zodiac')) || false;
+    var zodiac = JSON.parse(getParameterByName('zodiac')) || true;
     var page_index = parseInt(Math.random() * 1000);
     var current_label = null;
 
@@ -76,18 +76,18 @@
     ];
 
     var zodiac_set = [
-        { url: "chinese_zodiac/dog.png", label: 1 },
-        { url: "chinese_zodiac/dragon.png", label: 2 },
-        { url: "chinese_zodiac/goat.png", label: 3 },
-        { url: "chinese_zodiac/horse.png", label: 4 },
-        { url: "chinese_zodiac/monkey.png", label: 5 },
-        { url: "chinese_zodiac/ox.png", label: 6 },
-        { url: "chinese_zodiac/pig.png", label: 7 },
-        { url: "chinese_zodiac/rabbit_2.png", label: 8 },
-        { url: "chinese_zodiac/rat.png", label: 9 },
-        { url: "chinese_zodiac/rooster.png", label: 10 },
-        { url: "chinese_zodiac/snake.png", label: 11 },
-        { url: "chinese_zodiac/tiger.png", label: 12 }
+        { url: "one_hand_zodiac/dog.png", label: 11 },
+        { url: "one_hand_zodiac/dragon.png", label: 5 },
+        { url: "one_hand_zodiac/goat.png", label: 8 },
+        { url: "one_hand_zodiac/horse.png", label: 7 },
+        { url: "one_hand_zodiac/monkey.png", label: 9 },
+        { url: "one_hand_zodiac/ox.png", label: 2 },
+        { url: "one_hand_zodiac/pig.png", label: 12 },
+        { url: "one_hand_zodiac/rabbit.png", label: 4 },
+        { url: "one_hand_zodiac/rat.png", label: 1 },
+        { url: "one_hand_zodiac/rooster.png", label: 10 },
+        { url: "one_hand_zodiac/snake.png", label: 6 },
+        { url: "one_hand_zodiac/tiger.png", label: 3 }
     ];
 
     let height = 0;

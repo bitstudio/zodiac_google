@@ -98,6 +98,10 @@ Install CUDA then:
 ### Training
 `python3 train.py --list <directory name> --iter <iterations> --name <weight set name>`
 
+Example:
+`python3 train.py --list data_1 data_2 data_3 --iter 1000 --name new_weight_set`
+
+
 ### Start server
 `python3 server.py`
 

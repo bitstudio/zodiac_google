@@ -76,7 +76,7 @@ if __name__ == '__main__':
         set_list = []
 
     # (depth, num_moments)
-    num_layers = 10
+    num_layers = 5
     if args.layers is not None:
         num_layers = args.layers
 
