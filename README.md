@@ -16,7 +16,7 @@ Humans are more or less capable dealing with classification problem. Given a new
 
 A metric implies a distance function, $d : S \times S \to R$, working on a closed set of features $S$ to compare a pair of two of such members. The model is a function parameterized by a set of weights $\vec{w}$ that converts an example into this feature space, $f : D \to S$ where $D$ is the space of input and example data. 
    
-![enter image description here](https://github.com/PVirie/zodiac/raw/master/artifacts/compare.png)
+![enter image description here](https://github.com/PVirie/zodiac/raw/master/docs/compare.png)
 
 Though this technique is [hardly novel](https://arxiv.org/abs/1711.06025). It surprisingly has not been much explored over the years of deep learning research despite that it's a straightforward way for doing classification. 
 
@@ -34,7 +34,7 @@ Provided with a set of exemplary objects categorized into classes, the training 
 
 The dataset contains many binary shadow projection images not unlike those of [MNIST](http://yann.lecun.com/exdb/mnist/). But it is of varied resolutions, and the informational content of each shadow image mostly clusters at the position of the hands in the image. Due to these natures, a dynamic model like RNN or data preprocessing is required to transform the image into a fixed-dimension feature vector for direct comparison. High variance models like RNN, however, requires more data or we risk overfitting. That is why we choose the later approach.
 
-![enter image description here](https://github.com/PVirie/zodiac/raw/master/artifacts/gen.png)
+![enter image description here](https://github.com/PVirie/zodiac/raw/master/docs/gen.png)
 
 Despite the difference in dimension, all we really need is the shape of the hand shadow in each image. So we extract shadow contour from the image, and resample the contour in the polar coordinate to have a fixed length of a regular angular interval. Doing this has many benefits:
 
@@ -51,11 +51,11 @@ The rotation invariant must be expressed in the feature vectors. In classical co
 
 We use a residue network to transform a fixed-length contour to a fixed dimension feature vector.
 
-![enter image description here](https://github.com/PVirie/zodiac/raw/master/artifacts/extraction.png)
+![enter image description here](https://github.com/PVirie/zodiac/raw/master/docs/extraction.png)
 
 As previously mentioned, we directly compare the features to those of the class examples. For the comparison metric, we use the negative gaussian as it has bounded edge preventing exploding of gradients. Here is the final model.
 
-![enter image description here](https://github.com/PVirie/zodiac/raw/master/artifacts/full.png)
+![enter image description here](https://github.com/PVirie/zodiac/raw/master/docs/full.png)
 
 ## Implementation
 
@@ -73,13 +73,13 @@ A shadowplay system that we can change class examples on the fly. Want to add or
 
 If we want to see what's going on in the top most level of our network, the most convenient way is to project the result feature space onto a 2D plane (via [t-SNE](https://lvdmaaten.github.io/tsne/)) ( where each of the color dots represents a shadow data point.)
 
-![enter image description here](https://github.com/PVirie/zodiac/raw/master/artifacts/COMP.png)
+![enter image description here](https://github.com/PVirie/zodiac/raw/master/docs/COMP.png)
 
 When we compare it to the similar projections from using just the raw data and from using [variational autoencoder](https://en.wikipedia.org/wiki/Autoencoder#Variational_autoencoder_(VAE)) as the encoding network.
 
-![enter image description here](https://github.com/PVirie/zodiac/raw/master/artifacts/RAW.png)
+![enter image description here](https://github.com/PVirie/zodiac/raw/master/docs/RAW.png)
 
-![enter image description here](https://github.com/PVirie/zodiac/raw/master/artifacts/VAE.png)
+![enter image description here](https://github.com/PVirie/zodiac/raw/master/docs/VAE.png)
 
 Clearly, we can see a benefit of using our model for data clustering because that's what it has been designed to do from start.
 
