@@ -1063,6 +1063,8 @@ body .markdown-body
 <li><a href="#training-with-new-data">x = training with new data</a></li>
 <li><a href="#update-templates">x = update templates</a></li>
 <li><a href="#update-web-model">x = update web model</a></li>
+<li><a href="#train-on-tpus">x = train on TPUs</a></li>
+<li><a href="#generate_morph_targets_for_web">x = generate morph targets for web</a></li>
 </ul>
 <h2 id="read-the-project">Read the project<a class="headerlink" href="#read-the-project" title="Permanent link"></a></h2>
 <h3 id="script-dependency-graph">Script dependency graph<a class="headerlink" href="#script-dependency-graph" title="Permanent link"></a></h3>
@@ -1230,7 +1232,7 @@ body .markdown-body
 <p><a href="#deploy">Deploy the server.</a></p>
 </li>
 <li>
-<p>When you select a new choice of weight set or template set from <code>https://&lt;url&gt;:&lt;port&gt;/index.html</code>, the server will automatically pack everything for web. (Check the console for.)
+<p>When you select a new choice of weight set or template set from <code>https://&lt;url&gt;:&lt;port&gt;/index.html</code>, the server will automatically pack everything for web. Check the console for.
     <div class="codehilite"><pre>writing to  model/model_2.json
 writing to  model/model_3.json
 writing to  model/model_4.json
@@ -1244,4 +1246,15 @@ writing to  model/model.json
 │   ├── model
 </pre></div></p>
 </li>
+</ol>
+<h2 id="train-on-tpus">Train on TPUs<a class="headerlink" href="#train-on-tpus" title="Permanent link"></a></h2>
+<p>The branch had not been updated for some times. It might not work anymore.</p>
+<h2 id="generate-morph-targets-for-web">Generate morph targets for web<a class="headerlink" href="#generate-morph-targets-for-web" title="Permanent link"></a></h2>
+<ol>
+<li>Go to <code>morph.py</code> and edit line <code>save_target_for_web_download(os.path.join(os.path.dirname(os.path.realpath(__file__)), "web"), raw_target_dir, size, True)</code> with <code>raw_tar_get_dir</code> points to a folder containing outline images for morphing. (Ex., <code>data/morph_targets</code>)</li>
+<li>Run <code>python3 morpy.py</code>, this commands will generate necessary data for morphing on web at 
+    <div class="codehilite"><pre>├── web
+│   ├── morph_data
+</pre></div></li>
+<li>Copy the entire directory to the server.</li>
 </ol></article></body></html>

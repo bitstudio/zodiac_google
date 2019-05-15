@@ -95,27 +95,26 @@ def save_target_for_web_download(save_path, source_dir, size, invert):
 
 if __name__ == '__main__':
 
-    img_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "templates", "large_template_front", "0.10.0,0,100,100.png")
+    # img_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "templates", "large_template_front", "0.10.0,0,100,100.png")
 
     size = (500, 500)
-
     raw_target_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), "data", "morph_targets")
-    img2_path = os.path.join(raw_target_dir, "08.png")
+    # img2_path = os.path.join(raw_target_dir, "08.png")
 
-    img = cv2.imread(img_path)
-    img2 = cv2.imread(img2_path)
+    # img = cv2.imread(img_path)
+    # img2 = cv2.imread(img2_path)
 
-    points = get_contour(img, size)
-    center = find_a_center(points)
-    print(center)
+    # points = get_contour(img, size)
+    # center = find_a_center(points)
+    # print(center)
 
-    points2 = get_contour(img2, (500, 500), True)
+    # points2 = get_contour(img2, (500, 500), True)
 
-    for i in np.arange(-1.0, 1.0, 0.05):
-        morphed_points = morph(points if i < 0 else points2, size, center if i < 0 else (250, 250), i)
-        canvas = cv2.fillPoly(np.zeros((size[1], size[0], 3)), [morphed_points.astype(np.int32)], (255, 255, 255), 8)
-        cv2.imshow("Gen", canvas)
-        cv2.waitKey(30)
+    # for i in np.arange(-1.0, 1.0, 0.05):
+    #     morphed_points = morph(points if i < 0 else points2, size, center if i < 0 else (250, 250), i)
+    #     canvas = cv2.fillPoly(np.zeros((size[1], size[0], 3)), [morphed_points.astype(np.int32)], (255, 255, 255), 8)
+    #     cv2.imshow("Gen", canvas)
+    #     cv2.waitKey(30)
 
     # gen download file
     save_target_for_web_download(os.path.join(os.path.dirname(os.path.realpath(__file__)), "web"), raw_target_dir, size, True)

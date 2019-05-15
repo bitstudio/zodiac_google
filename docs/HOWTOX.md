@@ -8,6 +8,8 @@ Or simply, how to x, jump to the topic of your concern.
 * [x = training with new data](#training-with-new-data)
 * [x = update templates](#update-templates)
 * [x = update web model](#update-web-model)
+* [x = train on TPUs](#train-on-tpus)
+* [x = generate morph targets for web](#generate_morph_targets_for_web)
 
 ## Read the project
 
@@ -183,7 +185,7 @@ Given a folder of raw PNG images to be used as templates,
 
 1. [Deploy the server.](#deploy)
 
-2. When you select a new choice of weight set or template set from `https://<url>:<port>/index.html`, the server will automatically pack everything for web. (Check the console for.)
+2. When you select a new choice of weight set or template set from `https://<url>:<port>/index.html`, the server will automatically pack everything for web. Check the console for.
     ```
     writing to  model/model_2.json
     writing to  model/model_3.json
@@ -197,3 +199,18 @@ Given a folder of raw PNG images to be used as templates,
     ├── web
     │   ├── model
     ```
+
+## Train on TPUs
+
+The branch had not been updated for some times. It might not work anymore.
+
+
+## Generate morph targets for web
+
+1. Go to `morph.py` and edit line `save_target_for_web_download(os.path.join(os.path.dirname(os.path.realpath(__file__)), "web"), raw_target_dir, size, True)` with `raw_tar_get_dir` points to a folder containing outline images for morphing. (Ex., `data/morph_targets`)
+2. Run `python3 morpy.py`, this commands will generate necessary data for morphing on web at 
+    ```
+    ├── web
+    │   ├── morph_data
+    ```
+3. Copy the entire directory to the server.
